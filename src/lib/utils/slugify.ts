@@ -16,8 +16,8 @@ export function slugify(input: string): string {
     .join('')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
     .slice(0, 200)
+    .replace(/^-+|-+$/g, '')
 }
 
 /**
@@ -25,10 +25,11 @@ export function slugify(input: string): string {
  */
 export function uniqueSlug(base: string, existingSlugs: string[]): string {
   const baseSlug = slugify(base)
-  if (!existingSlugs.includes(baseSlug)) return baseSlug
+  const existingSet = new Set(existingSlugs)
+  if (!existingSet.has(baseSlug)) return baseSlug
 
   let counter = 2
-  while (existingSlugs.includes(`${baseSlug}-${counter}`)) {
+  while (existingSet.has(`${baseSlug}-${counter}`)) {
     counter++
   }
   return `${baseSlug}-${counter}`
