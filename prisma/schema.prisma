@@ -1,0 +1,677 @@
+// This is your Prisma schema file for AgroPortal
+// PostgreSQL 16 + Full Text Search support
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  user
+  company
+  admin
+  vet
+}
+
+enum ListingStatus {
+  draft
+  active
+  expired
+  sold
+  rejected
+}
+
+enum ListingCondition {
+  new
+  used
+  for_parts
+}
+
+enum CompanyStatus {
+  pending
+  verified
+  rejected
+  suspended
+}
+
+enum SubscriptionTier {
+  none
+  basic
+  premium
+}
+
+enum ExchangeCategory {
+  zboze
+  rzepak
+  kukurydza
+  buraki
+  ziemniaki
+  warzywa
+  owoce
+  inne
+}
+
+enum OrderFrequency {
+  weekly
+  biweekly
+  monthly
+}
+
+enum ArticleStatus {
+  draft
+  published
+  archived
+}
+
+enum SubsidyStatus {
+  draft
+  published
+  archived
+}
+
+// ============================================================
+// USERS & PROFILES
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(user)
+  deletedAt     DateTime? // soft-delete (GDPR)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth
+  accounts Account[]
+  sessions Session[]
+
+  // Profile
+  profile UserProfile?
+
+  // Company profile (role=company)
+  company CompanyProfile?
+
+  // Content
+  listings         Listing[]
+  exchangeOffers   ExchangeOffer[]
+  orderPlans       MonthlyOrderPlan[]
+  articleAuthors   Article[]
+  reviews          CompanyReview[]
+  reviewsReceived  CompanyReview[]   @relation("ReviewTarget")
+
+  // Messaging
+  sentMessages     Message[]
+  conversations    ConversationParticipant[]
+
+  // Notifications
+  notifications    Notification[]
+  savedListings    SavedListing[]
+
+  @@index([email])
+  @@index([role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model UserProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  username       String   @unique
+  bio            String?
+  phone          String?
+  voivodeship    String?  // TERYT code
+  city           String?
+  avatarUrl      String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([username])
+  @@index([voivodeship])
+  @@map("user_profiles")
+}
+
+// ============================================================
+// AUTH (NextAuth.js v5)
+// ============================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================
+// COMPANIES
+// ============================================================
+
+model CompanyProfile {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String
+  slug         String        @unique
+  nip          String        @unique
+  description  String?       @db.Text
+  logoUrl      String?
+  websiteUrl   String?
+  phone        String?
+  email        String?
+
+  // Address
+  voivodeship  String        // TERYT code
+  city         String
+  street       String?
+  postalCode   String?
+
+  // Map
+  lat          Float?
+  lng          Float?
+
+  // Business
+  status       CompanyStatus @default(pending)
+  subscription SubscriptionTier @default(none)
+  subscriptionExpiresAt DateTime?
+
+  // SEO
+  metaTitle    String?
+  metaDesc     String?
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  categories   CompanyCategory[]
+  reviews      CompanyReview[]
+  payments     Payment[]
+
+  @@index([slug])
+  @@index([nip])
+  @@index([voivodeship])
+  @@index([status])
+  @@index([subscription])
+  @@map("company_profiles")
+}
+
+model CompanyCategory {
+  id        String         @id @default(cuid())
+  companyId String
+  company   CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+
+  @@index([companyId])
+  @@map("company_categories")
+}
+
+model CompanyReview {
+  id         String         @id @default(cuid())
+  companyId  String
+  company    CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User           @relation(fields: [authorId], references: [id])
+  targetId   String
+  target     User           @relation("ReviewTarget", fields: [targetId], references: [id])
+
+  rating     Int            // 1-5
+  comment    String?        @db.Text
+  isVisible  Boolean        @default(true)
+
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([companyId, authorId])
+  @@index([companyId])
+  @@index([authorId])
+  @@map("company_reviews")
+}
+
+// ============================================================
+// LISTINGS (ogłoszenia maszyn)
+// ============================================================
+
+model ListingCategory {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  parentId    String?
+  parent      ListingCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    ListingCategory[] @relation("CategoryTree")
+  listings    Listing[]
+
+  @@index([slug])
+  @@map("listing_categories")
+}
+
+model Listing {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id])
+  categoryId  String
+  category    ListingCategory  @relation(fields: [categoryId], references: [id])
+
+  title       String
+  slug        String           @unique
+  description String           @db.Text
+  price       Decimal          @db.Decimal(12, 2)
+  currency    String           @default("PLN")
+  condition   ListingCondition
+  status      ListingStatus    @default(draft)
+
+  // Location
+  voivodeship String           // TERYT code
+  city        String
+
+  // Media
+  images      ListingImage[]
+
+  // Highlight (paid)
+  isHighlighted Boolean        @default(false)
+  highlightedUntil DateTime?
+
+  // Auto-expiry
+  expiresAt   DateTime?
+
+  // SEO
+  metaTitle   String?
+  metaDesc    String?
+
+  // FTS search vector (updated via trigger/migration)
+  searchVector String?         @db.Text
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relations
+  payments    Payment[]
+  savedBy     SavedListing[]
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([voivodeship])
+  @@index([isHighlighted])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@map("listings")
+}
+
+model ListingImage {
+  id         String   @id @default(cuid())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url        String
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([listingId])
+  @@map("listing_images")
+}
+
+model SavedListing {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@index([userId])
+  @@map("saved_listings")
+}
+
+// ============================================================
+// EXCHANGE (giełda produktów)
+// ============================================================
+
+model ExchangeOffer {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+
+  title        String
+  slug         String           @unique
+  description  String?          @db.Text
+  category     ExchangeCategory
+  quantity     Decimal          @db.Decimal(12, 2)
+  unit         String           // kg, t, szt
+  pricePerUnit Decimal          @db.Decimal(12, 2)
+  currency     String           @default("PLN")
+
+  voivodeship  String           // TERYT code
+  city         String
+
+  isActive     Boolean          @default(true)
+  expiresAt    DateTime?
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  priceHistory PriceHistoryEntry[]
+  orderPlans   MonthlyOrderPlan[]
+
+  @@index([userId])
+  @@index([category])
+  @@index([voivodeship])
+  @@index([isActive])
+  @@map("exchange_offers")
+}
+
+model PriceHistoryEntry {
+  id         String        @id @default(cuid())
+  offerId    String
+  offer      ExchangeOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  price      Decimal       @db.Decimal(12, 2)
+  recordedAt DateTime      @default(now())
+
+  @@index([offerId])
+  @@index([recordedAt])
+  @@map("price_history")
+}
+
+// ============================================================
+// MONTHLY ORDERS (zamówienia cykliczne)
+// ============================================================
+
+model MonthlyOrderPlan {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  offerId      String
+  offer        ExchangeOffer @relation(fields: [offerId], references: [id])
+
+  quantity     Decimal       @db.Decimal(12, 2)
+  unit         String
+  deliveryDay  Int           // 1-28 day of month
+  frequency    OrderFrequency @default(monthly)
+  isActive     Boolean       @default(true)
+
+  notes        String?       @db.Text
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  orders       MonthlyOrder[]
+
+  @@index([userId])
+  @@index([offerId])
+  @@index([isActive])
+  @@map("monthly_order_plans")
+}
+
+model MonthlyOrder {
+  id          String           @id @default(cuid())
+  planId      String
+  plan        MonthlyOrderPlan @relation(fields: [planId], references: [id])
+
+  scheduledFor DateTime        // idempotency key
+  status      String           @default("pending") // pending, confirmed, cancelled
+  priceSnapshot Decimal        @db.Decimal(12, 2)
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([planId, scheduledFor]) // idempotency
+  @@index([planId])
+  @@index([scheduledFor])
+  @@index([status])
+  @@map("monthly_orders")
+}
+
+// ============================================================
+// ARTICLES & CMS
+// ============================================================
+
+model ArticleCategory {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  articles Article[]
+
+  @@index([slug])
+  @@map("article_categories")
+}
+
+model Article {
+  id          String          @id @default(cuid())
+  authorId    String
+  author      User            @relation(fields: [authorId], references: [id])
+  categoryId  String?
+  category    ArticleCategory? @relation(fields: [categoryId], references: [id])
+
+  title       String
+  slug        String          @unique
+  excerpt     String?
+  content     String          @db.Text  // Tiptap JSON stored as text
+  coverUrl    String?
+  status      ArticleStatus   @default(draft)
+
+  publishedAt DateTime?
+
+  // SEO
+  metaTitle   String?
+  metaDesc    String?
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([publishedAt])
+  @@map("articles")
+}
+
+// ============================================================
+// SUBSIDIES / DOTACJE
+// ============================================================
+
+model Subsidy {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  excerpt     String?
+  content     String        @db.Text
+  coverUrl    String?
+  status      SubsidyStatus @default(draft)
+  deadline    DateTime?
+  publishedAt DateTime?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status])
+  @@index([deadline])
+  @@map("subsidies")
+}
+
+// ============================================================
+// AGRICULTURAL CALENDAR
+// ============================================================
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  category    String   // siew, zbiory, doplaty, agrotechnika
+  month       Int      // 1-12
+  dayFrom     Int?     // 1-31
+  dayTo       Int?
+  isRecurring Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([month])
+  @@index([category])
+  @@map("calendar_events")
+}
+
+// ============================================================
+// MESSAGING
+// ============================================================
+
+model Conversation {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  lastReadAt     DateTime?
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+
+  content        String       @db.Text
+  isRead         Boolean      @default(false)
+
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String   // listing_expiring, new_message, order_generated, etc.
+  title     String
+  body      String?
+  link      String?
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================================================
+// PAYMENTS (PayU)
+// ============================================================
+
+model Payment {
+  id          String   @id @default(cuid())
+  userId      String?
+
+  // What was paid for
+  listingId   String?
+  listing     Listing? @relation(fields: [listingId], references: [id])
+  companyId   String?
+  company     CompanyProfile? @relation(fields: [companyId], references: [id])
+
+  // PayU
+  payuOrderId String?  @unique
+  type        String   // highlight, subscription_basic, subscription_premium
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String   @default("PLN")
+  status      String   @default("pending") // pending, completed, cancelled, refunded
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([payuOrderId])
+  @@map("payments")
+}
+
+// ============================================================
+// MACHINERY CATALOG (UGC)
+// ============================================================
+
+model MachineryModel {
+  id          String   @id @default(cuid())
+  brand       String
+  model       String
+  year        Int?
+  category    String
+  description String?  @db.Text
+  specs       String?  @db.Text // JSON specs
+  imageUrl    String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([brand, model])
+  @@index([brand])
+  @@index([category])
+  @@map("machinery_models")
+}
