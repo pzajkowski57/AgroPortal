@@ -8,9 +8,12 @@ const POLISH_MAP: Record<string, string> = {
 /**
  * Converts a string to a URL-safe slug with Polish diacritics support.
  * Example: "Ciągnik rolniczy Ursus C-360" → "ciagnik-rolniczy-ursus-c-360"
+ *
+ * Returns `'item'` when the input is empty or whitespace-only (produces no
+ * slug-safe characters after normalization).
  */
 export function slugify(input: string): string {
-  return input
+  const result = input
     .split('')
     .map((char) => POLISH_MAP[char] ?? char)
     .join('')
@@ -18,10 +21,22 @@ export function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .slice(0, 200)
     .replace(/^-+|-+$/g, '')
+
+  return result === '' ? 'item' : result
 }
 
 /**
- * Generates a unique slug by appending a suffix if the base slug already exists.
+ * Generates a unique slug by appending a numeric suffix if the base slug already exists.
+ *
+ * @param base - The raw string to slugify and make unique.
+ * @param existingSlugs - A list of already-slugified strings to check uniqueness against.
+ *   Each entry must already be a valid slug (i.e. produced by `slugify`). Passing raw
+ *   un-slugified strings will produce incorrect results.
+ *
+ * @remarks
+ * This function is NOT atomic. In concurrent or distributed environments two callers
+ * may independently receive the same slug before either has persisted it.
+ * Enforce uniqueness at the database level (unique index) and retry on conflict.
  */
 export function uniqueSlug(base: string, existingSlugs: string[]): string {
   const baseSlug = slugify(base)

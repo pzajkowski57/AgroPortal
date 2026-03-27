@@ -16,6 +16,19 @@ describe('VOIVODESHIPS', () => {
       expect(v.code).toMatch(/^\d{2}$/)
     })
   })
+
+  it('all have a nameLower field that is a non-empty string', () => {
+    VOIVODESHIPS.forEach((v) => {
+      expect(typeof v.nameLower).toBe('string')
+      expect(v.nameLower.length).toBeGreaterThan(0)
+    })
+  })
+
+  it('nameLower contains only lowercase ASCII letters, digits, and hyphens', () => {
+    VOIVODESHIPS.forEach((v) => {
+      expect(v.nameLower).toMatch(/^[a-z0-9-]+$/)
+    })
+  })
 })
 
 describe('getVoivodeshipName', () => {

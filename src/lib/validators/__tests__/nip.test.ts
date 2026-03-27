@@ -14,6 +14,26 @@ describe('validateNip', () => {
     expect(validateNip('123')).toBe(false)
     expect(validateNip('abcdefghij')).toBe(false)
   })
+
+  it('rejects empty string', () => {
+    expect(validateNip('')).toBe(false)
+  })
+
+  it('accepts NIP with surrounding whitespace (whitespace is stripped)', () => {
+    // The validator strips [-\s] globally, so surrounding spaces and dashes are
+    // removed before validation. Both of these become valid 10-digit NIPs.
+    expect(validateNip(' 526-025-02-74 ')).toBe(true)
+    expect(validateNip(' 123-456-32-18 ')).toBe(true)
+  })
+
+  it('rejects all-zeros NIP', () => {
+    expect(validateNip('0000000000')).toBe(false)
+  })
+
+  it('rejects all-same-digit NIPs', () => {
+    expect(validateNip('1111111111')).toBe(false)
+    expect(validateNip('9999999999')).toBe(false)
+  })
 })
 
 describe('formatNip', () => {

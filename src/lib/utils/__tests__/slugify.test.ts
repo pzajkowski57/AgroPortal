@@ -15,6 +15,14 @@ describe('slugify', () => {
   it('trims leading/trailing hyphens', () => {
     expect(slugify('  hello world  ')).toBe('hello-world')
   })
+
+  it('returns "item" for empty string', () => {
+    expect(slugify('')).toBe('item')
+  })
+
+  it('returns "item" for whitespace-only string', () => {
+    expect(slugify('   ')).toBe('item')
+  })
 })
 
 describe('uniqueSlug', () => {

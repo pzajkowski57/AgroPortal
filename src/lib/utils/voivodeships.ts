@@ -1,24 +1,31 @@
-export const VOIVODESHIPS = [
-  { code: '02', name: 'Dolnośląskie', nameLower: 'dolnoslaskie' },
-  { code: '04', name: 'Kujawsko-Pomorskie', nameLower: 'kujawsko-pomorskie' },
-  { code: '06', name: 'Lubelskie', nameLower: 'lubelskie' },
-  { code: '08', name: 'Lubuskie', nameLower: 'lubuskie' },
-  { code: '10', name: 'Łódzkie', nameLower: 'lodzkie' },
-  { code: '12', name: 'Małopolskie', nameLower: 'malopolskie' },
-  { code: '14', name: 'Mazowieckie', nameLower: 'mazowieckie' },
-  { code: '16', name: 'Opolskie', nameLower: 'opolskie' },
-  { code: '18', name: 'Podkarpackie', nameLower: 'podkarpackie' },
-  { code: '20', name: 'Podlaskie', nameLower: 'podlaskie' },
-  { code: '22', name: 'Pomorskie', nameLower: 'pomorskie' },
-  { code: '24', name: 'Śląskie', nameLower: 'slaskie' },
-  { code: '26', name: 'Świętokrzyskie', nameLower: 'swietokrzyskie' },
-  { code: '28', name: 'Warmińsko-Mazurskie', nameLower: 'warminsko-mazurskie' },
-  { code: '30', name: 'Wielkopolskie', nameLower: 'wielkopolskie' },
-  { code: '32', name: 'Zachodniopomorskie', nameLower: 'zachodniopomorskie' },
+import { slugify } from './slugify'
+
+const VOIVODESHIPS_RAW = [
+  { code: '02', name: 'Dolnośląskie' },
+  { code: '04', name: 'Kujawsko-Pomorskie' },
+  { code: '06', name: 'Lubelskie' },
+  { code: '08', name: 'Lubuskie' },
+  { code: '10', name: 'Łódzkie' },
+  { code: '12', name: 'Małopolskie' },
+  { code: '14', name: 'Mazowieckie' },
+  { code: '16', name: 'Opolskie' },
+  { code: '18', name: 'Podkarpackie' },
+  { code: '20', name: 'Podlaskie' },
+  { code: '22', name: 'Pomorskie' },
+  { code: '24', name: 'Śląskie' },
+  { code: '26', name: 'Świętokrzyskie' },
+  { code: '28', name: 'Warmińsko-Mazurskie' },
+  { code: '30', name: 'Wielkopolskie' },
+  { code: '32', name: 'Zachodniopomorskie' },
 ] as const
 
-export type VoivodeshipCode = (typeof VOIVODESHIPS)[number]['code']
-export type VoivodeshipName = (typeof VOIVODESHIPS)[number]['name']
+export const VOIVODESHIPS = VOIVODESHIPS_RAW.map((v) => ({
+  ...v,
+  nameLower: slugify(v.name),
+}))
+
+export type VoivodeshipCode = (typeof VOIVODESHIPS_RAW)[number]['code']
+export type VoivodeshipName = (typeof VOIVODESHIPS_RAW)[number]['name']
 
 /**
  * Get voivodeship name by TERYT code.
@@ -30,7 +37,9 @@ export function getVoivodeshipName(code: string): string | undefined {
 /**
  * Get voivodeship by TERYT code.
  */
-export function getVoivodeship(code: string) {
+export function getVoivodeship(
+  code: string
+): (typeof VOIVODESHIPS)[number] | undefined {
   return VOIVODESHIPS.find((v) => v.code === code)
 }
 

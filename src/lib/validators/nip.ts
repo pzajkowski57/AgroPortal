@@ -11,18 +11,24 @@ export function validateNip(nip: string): boolean {
 
   if (!/^\d{10}$/.test(clean)) return false
 
+  // Reject NIPs where all digits are identical (e.g. 0000000000, 1111111111)
+  if (new Set(clean).size === 1) return false
+
   const digits = clean.split('').map(Number)
   const checksum = NIP_WEIGHTS.reduce(
     (sum, weight, i) => sum + weight * digits[i],
     0
   )
 
-  return checksum % 11 === digits[9]
+  const remainder = checksum % 11
+  if (remainder === 10) return false
+
+  return remainder === digits[9]
 }
 
 export const nipSchema = z
   .string()
-  .min(10, 'NIP musi mieć co najmniej 10 cyfr')
+  .length(10, 'NIP musi mieć dokładnie 10 cyfr')
   .refine(validateNip, { message: 'Nieprawidłowy numer NIP' })
 
 export function formatNip(nip: string): string {
