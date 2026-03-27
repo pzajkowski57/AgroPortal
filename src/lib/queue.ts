@@ -32,8 +32,13 @@ export function createWorker<T = unknown, R = unknown>(
   processor: Processor<T, R>,
   options?: Omit<WorkerOptions, 'connection'>,
 ): Worker<T, R> {
-  return new Worker<T, R>(name, processor, {
+  const worker = new Worker<T, R>(name, processor, {
     ...options,
+    concurrency: options?.concurrency ?? 5,
     connection: redisConnection,
   })
+
+  worker.on('error', (err) => console.error('[BullMQ Worker Error]', err))
+
+  return worker
 }

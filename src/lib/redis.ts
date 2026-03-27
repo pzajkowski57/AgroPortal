@@ -9,6 +9,7 @@ function createRedisClient(): Redis {
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
     lazyConnect: true,
+    retryStrategy: (times) => (times > 20 ? null : Math.min(times * 100, 3000)),
   })
 
   client.on('error', (err) => {
