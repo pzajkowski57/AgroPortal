@@ -115,6 +115,18 @@ enum CalendarCategory {
   nawozy
 }
 
+// Issue #2: replaced free-text CompanyCategory.name with proper enum
+enum CompanyCategoryName {
+  MACHINERY
+  SEEDS
+  FERTILIZERS
+  PESTICIDES
+  IRRIGATION
+  STORAGE
+  SERVICES
+  OTHER
+}
+
 // ============================================================
 // USERS & PROFILES
 // ============================================================
@@ -179,7 +191,7 @@ model UserProfile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([username])
+  // Issue #8: removed @@index([username]) — @unique already implies an index
   @@index([voivodeship])
   @@map("user_profiles")
 }
@@ -237,7 +249,7 @@ model CookieConsent {
   id          String   @id @default(cuid())
   userId      String?  @unique
   user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId   String?  // for anonymous users
+  sessionId   String?  @unique // Issue #5: @unique to prevent duplicate consent rows per session
 
   analytics   Boolean  @default(false)
   marketing   Boolean  @default(false)
@@ -245,7 +257,7 @@ model CookieConsent {
   acceptedAt  DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([sessionId])
+  // Issue #8: removed @@index([sessionId]) — @unique already implies an index
   @@map("cookie_consents")
 }
 
@@ -294,19 +306,19 @@ model CompanyProfile {
   reviews      CompanyReview[]
   payments     Payment[]
 
-  @@index([slug])
-  @@index([nip])
+  // Issue #8: removed @@index([slug]) and @@index([nip]) — @unique already implies indexes
   @@index([voivodeship])
   @@index([status])
   @@index([subscription])
   @@map("company_profiles")
 }
 
+// Issue #2: name field now uses CompanyCategoryName enum instead of free-text String
 model CompanyCategory {
-  id        String         @id @default(cuid())
+  id        String              @id @default(cuid())
   companyId String
-  company   CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  name      String
+  company   CompanyProfile      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      CompanyCategoryName
 
   @@index([companyId])
   @@map("company_categories")
@@ -317,7 +329,8 @@ model CompanyReview {
   companyId String
   company   CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
   authorId  String
-  author    User           @relation(fields: [authorId], references: [id])
+  // Issue #1 (line ~320): added onDelete: Cascade — review has no meaning without its author
+  author    User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   rating    Int            // 1-5
   comment   String?        @db.Text
@@ -345,7 +358,7 @@ model ListingCategory {
   children ListingCategory[] @relation("CategoryTree")
   listings Listing[]
 
-  @@index([slug])
+  // Issue #8: removed @@index([slug]) — @unique already implies an index
   @@map("listing_categories")
 }
 
@@ -354,7 +367,8 @@ model Listing {
   userId           String?
   user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   categoryId       String
-  category         ListingCategory  @relation(fields: [categoryId], references: [id])
+  // Issue #1 (line ~357): added onDelete: Restrict — listing must belong to a valid category
+  category         ListingCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   machineryModelId String?
   machineryModel   MachineryModel?  @relation(fields: [machineryModelId], references: [id], onDelete: SetNull)
 
@@ -402,6 +416,9 @@ model Listing {
   @@index([isHighlighted, highlightedUntil])
   @@index([expiresAt])
   @@index([createdAt])
+  // Issue #6: composite index for active-listing queries
+  @@index([status, expiresAt])
+  @@index([price])
   @@map("listings")
 }
 
@@ -487,9 +504,11 @@ model PriceHistoryEntry {
 model MonthlyOrderPlan {
   id          String        @id @default(cuid())
   userId      String
-  user        User          @relation(fields: [userId], references: [id])
+  // Issue #1 (line ~490): added onDelete: Cascade — plan has no meaning without its owner
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   offerId     String
-  offer       ExchangeOffer @relation(fields: [offerId], references: [id])
+  // Issue #1 (line ~492): added onDelete: Cascade — plan has no meaning without its offer
+  offer       ExchangeOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
 
   quantity    Decimal        @db.Decimal(12, 2)
   unit        String
@@ -513,7 +532,8 @@ model MonthlyOrderPlan {
 model MonthlyOrder {
   id     String           @id @default(cuid())
   planId String
-  plan   MonthlyOrderPlan @relation(fields: [planId], references: [id])
+  // Issue #1 (line ~516): added onDelete: Cascade — order has no meaning without its plan
+  plan   MonthlyOrderPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   scheduledFor  DateTime           // idempotency key
   status        MonthlyOrderStatus @default(pending)
@@ -539,21 +559,23 @@ model ArticleCategory {
   slug     String    @unique
   articles Article[]
 
-  @@index([slug])
+  // Issue #8: removed @@index([slug]) — @unique already implies an index
   @@map("article_categories")
 }
 
 model Article {
   id         String           @id @default(cuid())
   authorId   String
-  author     User             @relation(fields: [authorId], references: [id])
+  // Issue #1 (line ~549): added onDelete: Restrict — preserve articles even if author is removed
+  author     User             @relation(fields: [authorId], references: [id], onDelete: Restrict)
   categoryId String?
   category   ArticleCategory? @relation(fields: [categoryId], references: [id])
 
   title   String
   slug    String        @unique
   excerpt String?
-  content String        @db.Text // Tiptap JSON stored as text
+  // Issue #4: changed from String @db.Text to Json (maps to jsonb in PostgreSQL)
+  content Json
   coverUrl String?
   status  ArticleStatus @default(draft)
 
@@ -580,7 +602,8 @@ model Article {
 model Subsidy {
   id       String @id @default(cuid())
   authorId String
-  author   User   @relation(fields: [authorId], references: [id])
+  // Issue #1 (line ~583): added onDelete: Restrict — preserve subsidies even if author is removed
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Restrict)
 
   title   String
   slug    String        @unique
@@ -615,6 +638,8 @@ model CalendarEvent {
   dayTo       Int?
   isRecurring Boolean          @default(true)
   createdAt   DateTime         @default(now())
+  // Issue #9: added updatedAt field
+  updatedAt   DateTime         @updatedAt
 
   @@index([month])
   @@index([category])
@@ -641,7 +666,8 @@ model ConversationParticipant {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   userId         String
-  user           User         @relation(fields: [userId], references: [id])
+  // Issue #1 (line ~644): added onDelete: Cascade — participant record has no meaning without the user
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   lastReadAt     DateTime?
 
   @@unique([conversationId, userId])
@@ -654,10 +680,11 @@ model Message {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
-  sender         User         @relation(fields: [senderId], references: [id])
+  // Issue #1 (line ~657): added onDelete: Cascade — message has no meaning without its sender
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   content String  @db.Text
-  isRead  Boolean @default(false)
+  // Issue #3: removed isRead — read state is tracked by ConversationParticipant.lastReadAt
 
   createdAt DateTime @default(now())
 
@@ -699,9 +726,11 @@ model Payment {
 
   // What was paid for
   listingId String?
-  listing   Listing?        @relation(fields: [listingId], references: [id])
+  // Issue #1: added onDelete: SetNull — keep payment record even if listing is deleted
+  listing   Listing?        @relation(fields: [listingId], references: [id], onDelete: SetNull)
   companyId String?
-  company   CompanyProfile? @relation(fields: [companyId], references: [id])
+  // Issue #1: added onDelete: SetNull — keep payment record even if company is deleted
+  company   CompanyProfile? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   // PayU
   payuOrderId String?       @unique
@@ -720,6 +749,8 @@ model Payment {
   @@index([userId])
   @@index([status])
   @@index([payuOrderId])
+  // Issue #7: added @@index([companyId])
+  @@index([companyId])
   @@map("payments")
 }
 
@@ -734,7 +765,8 @@ model MachineryModel {
   year        Int?
   category    String
   description String?  @db.Text
-  specs       String?  @db.Text // JSON specs
+  // Issue #4: changed from String @db.Text to Json (maps to jsonb in PostgreSQL)
+  specs       Json?
   imageUrl    String?
 
   createdAt DateTime @default(now())
