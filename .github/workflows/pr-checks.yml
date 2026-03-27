@@ -1,0 +1,66 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title follows conventional commits
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "PR title: $PR_TITLE"
+          if echo "$PR_TITLE" | grep -qE '^(feat|fix|chore|docs|test|refactor|perf|ci)(\(.+\))?!?:.+'; then
+            echo "PR title is valid."
+          else
+            echo "ERROR: PR title does not follow conventional commits format."
+            echo "Expected: <type>(<scope>): <description>"
+            echo "Allowed types: feat, fix, chore, docs, test, refactor, perf, ci"
+            echo "Example: feat(auth): add Google OAuth login"
+            exit 1
+          fi
+
+  size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check number of changed files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          FILE_COUNT=$(gh api repos/$REPO/pulls/$PR_NUMBER/files --paginate --jq 'length')
+          echo "Files changed: $FILE_COUNT"
+          if [ "$FILE_COUNT" -gt 20 ]; then
+            echo "WARNING: This PR touches $FILE_COUNT files (>20). Consider breaking it into smaller PRs for easier review."
+          else
+            echo "PR size is within acceptable range ($FILE_COUNT files)."
+          fi
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
