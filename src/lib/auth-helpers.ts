@@ -12,8 +12,6 @@ import type { Role } from '@/types'
 // Types
 // ---------------------------------------------------------------------------
 
-// Matches the Session.user shape declared in src/types/next-auth.d.ts.
-// Defined here so callers have a stable import target without importing from next-auth.
 interface AuthenticatedUser {
   id: string
   role: Role
@@ -49,9 +47,7 @@ export async function requireAuth(
     redirect(redirectTo)
   }
 
-  // session.user is typed by the next-auth.d.ts augmentation and matches
-  // AuthenticatedUser exactly — no cast required.
-  return session.user
+  return session.user as AuthenticatedUser
 }
 
 /**
@@ -78,13 +74,14 @@ export async function requireRole(
     redirect(loginRedirect)
   }
 
+  const user = session.user as AuthenticatedUser
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
 
-  if (!roles.includes(session.user.role)) {
+  if (!roles.includes(user.role)) {
     redirect(forbiddenRedirect)
   }
 
-  return session.user
+  return user
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +104,7 @@ export async function hasRole(roles: Role | readonly Role[]): Promise<boolean> {
   const session = await auth()
   if (!session?.user) return false
 
+  const user = session.user as AuthenticatedUser
   const roleList = Array.isArray(roles) ? roles : [roles]
-  return roleList.includes(session.user.role)
+  return roleList.includes(user.role)
 }

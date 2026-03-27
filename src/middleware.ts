@@ -4,10 +4,10 @@
  *
  * Protected route prefixes:
  *   /panel/*  — any authenticated user
- *   /admin/*  — admin role only (enforced in the `authorized` callback)
+ *   /admin/*  — admin role only (enforced server-side in layouts/pages)
  *
- * The `authorized` callback in auth.config.ts handles both the auth check
- * and the admin role guard for /admin/* routes.
+ * The `authorized` callback in auth.config.ts handles the basic auth check.
+ * Fine-grained role checks (e.g. admin-only) are enforced in server components.
  */
 
 import NextAuth from 'next-auth'

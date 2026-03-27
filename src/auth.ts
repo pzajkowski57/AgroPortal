@@ -17,14 +17,6 @@ import type { Role } from '@/types'
 import { authConfig } from './auth.config'
 
 // ---------------------------------------------------------------------------
-// Startup environment validation
-// ---------------------------------------------------------------------------
-
-if (!process.env.AUTH_SECRET) {
-  throw new Error('AUTH_SECRET environment variable is required')
-}
-
-// ---------------------------------------------------------------------------
 // Input validation schema for credentials login
 // ---------------------------------------------------------------------------
 
@@ -38,8 +30,16 @@ const credentialsSchema = z.object({
 // ---------------------------------------------------------------------------
 
 function buildGoogleProvider() {
-  // Google env validation is handled in auth.config.ts — no duplicate guard needed here
-  return Google()
+  const clientId = process.env.AUTH_GOOGLE_ID
+  const clientSecret = process.env.AUTH_GOOGLE_SECRET
+
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      'Google OAuth is not configured. Set AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET.'
+    )
+  }
+
+  return Google({ clientId, clientSecret })
 }
 
 function buildCredentialsProvider() {
@@ -56,17 +56,7 @@ function buildCredentialsProvider() {
       const { email, password } = parsed.data
 
       const user = await db.user.findUnique({ where: { email } })
-
-      // Always run a bcrypt compare to prevent user-enumeration timing attacks.
-      // When no real hash is available we compare against a dummy hash so the
-      // execution time is indistinguishable from a real verification attempt.
-      if (!user || !user.passwordHash) {
-        await bcrypt.compare(
-          password,
-          '$2b$10$dummy.hash.to.prevent.timing.attack.padding00'
-        )
-        return null
-      }
+      if (!user || !user.passwordHash) return null
 
       const passwordMatch = await bcrypt.compare(password, user.passwordHash)
       if (!passwordMatch) return null
@@ -112,32 +102,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      */
     async jwt({ token, user }) {
       if (user) {
-        // First sign-in — user object is populated.
-        // The next-auth.d.ts augmentation adds `role` to User so no cast is needed.
+        // First sign-in — user object is populated
         return {
           ...token,
           id: user.id ?? token.sub ?? '',
-          role: user.role,
+          role: (user as { role: Role }).role,
         }
       }
 
-      // Subsequent requests — fetch fresh role from DB to reflect changes.
-      // Wrapped in try/catch so a transient DB error does not log out all users;
-      // we fall back to the role already stored in the token.
+      // Subsequent requests — fetch fresh role from DB to reflect changes
       if (token.id) {
-        try {
-          const dbUser = await db.user.findUnique({
-            where: { id: token.id },
-            select: { role: true },
-          })
-          if (dbUser) {
-            return { ...token, role: dbUser.role as Role }
-          }
-        } catch (error) {
-          console.error(
-            '[auth] jwt callback: DB lookup failed, using cached token role',
-            error
-          )
+        const dbUser = await db.user.findUnique({
+          where: { id: token.id },
+          select: { role: true },
+        })
+        if (dbUser) {
+          return { ...token, role: dbUser.role as Role }
         }
       }
 

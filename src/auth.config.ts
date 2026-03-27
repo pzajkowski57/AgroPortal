@@ -32,31 +32,19 @@ export const authConfig: NextAuthConfig = {
   },
   callbacks: {
     /**
-     * Controls which routes require authentication and role-based access.
+     * Controls which routes require authentication.
      * Runs on the edge — no DB calls allowed here.
-     *
-     * /panel/*  — any authenticated user
-     * /admin/*  — admin role only
      */
-    authorized({ auth: session, request }) {
+    authorized({ auth, request }) {
       const { pathname } = request.nextUrl
 
-      // Public routes — allow through unconditionally
-      if (!pathname.startsWith('/panel') && !pathname.startsWith('/admin')) {
-        return true
-      }
+      const isProtected =
+        pathname.startsWith('/panel') || pathname.startsWith('/admin')
 
-      const isLoggedIn = !!session?.user
-      if (!isLoggedIn) return false
+      if (!isProtected) return true
 
-      // Admin routes require the admin role.
-      // The JWT token carries `role` via the session callback in auth.ts.
-      if (pathname.startsWith('/admin')) {
-        return (session.user as { role?: string }).role === 'admin'
-      }
-
-      // /panel/* — any authenticated user
-      return true
+      const isLoggedIn = !!auth?.user
+      return isLoggedIn
     },
   },
 }
