@@ -39,7 +39,10 @@ const credentialsSchema = z.object({
 
 function buildGoogleProvider() {
   // Google env validation is handled in auth.config.ts — no duplicate guard needed here
-  return Google()
+  return Google({
+    clientId: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+  })
 }
 
 function buildCredentialsProvider() {
