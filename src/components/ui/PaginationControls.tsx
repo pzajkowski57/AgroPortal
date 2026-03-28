@@ -11,17 +11,6 @@ export interface PaginationControlsProps {
   className?: string
 }
 
-/**
- * Computes the list of page items to render.
- * Returns an array where items are either a page number or the string '...'
- * representing an ellipsis.
- *
- * Rules:
- * - Always show page 1 and the last page.
- * - Show a window of up to 5 pages centered around the current page.
- * - Insert '...' where there is a gap of more than one page between
- *   the edge pages (1 or last) and the window.
- */
 /** Maximum total pages before ellipsis logic kicks in. */
 const ELLIPSIS_THRESHOLD = 7
 
@@ -37,6 +26,8 @@ const ELLIPSIS_THRESHOLD = 7
  *   plus page 1 and last, with '...' inserted where gaps exist.
  */
 function buildPageItems(currentPage: number, totalPages: number): Array<number | '...'> {
+  if (totalPages <= 0) return []
+  const safePage = Math.min(currentPage, totalPages)
   if (totalPages <= 1) return [1]
 
   if (totalPages <= ELLIPSIS_THRESHOLD) {
@@ -45,8 +36,8 @@ function buildPageItems(currentPage: number, totalPages: number): Array<number |
 
   const WINDOW_HALF = 2 // pages on each side of current
 
-  const windowStart = Math.max(1, currentPage - WINDOW_HALF)
-  const windowEnd = Math.min(totalPages, currentPage + WINDOW_HALF)
+  const windowStart = Math.max(1, safePage - WINDOW_HALF)
+  const windowEnd = Math.min(totalPages, safePage + WINDOW_HALF)
 
   const pages = new Set<number>()
   pages.add(1)
@@ -98,7 +89,6 @@ export function PaginationControls({
     <nav
       className={cn('flex items-center gap-1', className)}
       aria-label="Paginacja"
-      role="navigation"
     >
       <Button
         variant="outline"
@@ -112,17 +102,18 @@ export function PaginationControls({
         <span>Poprzednia</span>
       </Button>
 
-      <div className="flex items-center gap-1" role="list">
+      <ul className="flex items-center gap-1">
         {pageItems.map((item, index) => {
           if (item === '...') {
             return (
-              <span
-                key={`ellipsis-${index}`}
-                className="px-2 py-1 text-sm text-gray-500 select-none"
-                aria-hidden="true"
-              >
-                ...
-              </span>
+              <li key={`ellipsis-${index}`}>
+                <span
+                  className="px-2 py-1 text-sm text-gray-500 select-none"
+                  aria-hidden="true"
+                >
+                  ...
+                </span>
+              </li>
             )
           }
 
@@ -130,22 +121,23 @@ export function PaginationControls({
           const isActive = page === currentPage
 
           return (
-            <Button
-              key={page}
-              variant={isActive ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handlePageClick(page)}
-              aria-current={isActive ? 'page' : undefined}
-              className={cn(
-                'min-w-[2rem]',
-                isActive && 'bg-agro-600 hover:bg-agro-700 text-white border-agro-600',
-              )}
-            >
-              {page}
-            </Button>
+            <li key={page}>
+              <Button
+                variant={isActive ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handlePageClick(page)}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn(
+                  'min-w-[2rem]',
+                  isActive && 'bg-agro-600 hover:bg-agro-700 text-white border-agro-600',
+                )}
+              >
+                {page}
+              </Button>
+            </li>
           )
         })}
-      </div>
+      </ul>
 
       <Button
         variant="outline"

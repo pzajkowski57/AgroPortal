@@ -1,6 +1,6 @@
 import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/test/helpers'
 import { PaginationControls } from '../PaginationControls'
@@ -185,6 +185,18 @@ describe('PaginationControls', () => {
       expect(screen.getByRole('button', { name: /poprzednia/i })).toBeDisabled()
       expect(screen.getByRole('button', { name: /następna/i })).toBeDisabled()
       expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument()
+    })
+
+    it('renders no page buttons when totalPages is 0', () => {
+      renderWithProviders(
+        <PaginationControls currentPage={1} totalPages={0} onPageChange={vi.fn()} />,
+      )
+
+      const pageButtons = screen
+        .getAllByRole('button')
+        .filter((btn) => /^\d+$/.test(btn.textContent ?? ''))
+
+      expect(pageButtons).toHaveLength(0)
     })
 
     it('accepts optional className and applies it to the container', () => {

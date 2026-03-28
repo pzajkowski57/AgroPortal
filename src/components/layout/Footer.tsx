@@ -1,8 +1,5 @@
-'use client'
-
 import Link from 'next/link'
 import { Sprout, Facebook, Twitter } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface NavLink {
   readonly label: string
@@ -23,12 +20,22 @@ const INFO_LINKS: readonly NavLink[] = [
   { label: 'Regulamin', href: '/regulamin' },
 ] as const
 
+interface SocialLink {
+  readonly label: string
+  readonly href: string
+  readonly Icon: React.ComponentType<{ className?: string }>
+}
+
+const SOCIAL_LINKS: readonly SocialLink[] = [
+  { label: 'Facebook', href: 'https://facebook.com/agroportal', Icon: Facebook },
+  { label: 'Twitter', href: 'https://twitter.com/agroportal', Icon: Twitter },
+] as const
+
 function FooterLogo() {
   return (
     <Link
       href="/"
       className="flex items-center gap-2 font-bold text-xl text-agro-600 hover:text-agro-700 transition-colors"
-      aria-label="AgroPortal"
     >
       <Sprout className="h-6 w-6" aria-hidden="true" />
       <span>AgroPortal</span>
@@ -38,7 +45,7 @@ function FooterLogo() {
 
 function NavSection() {
   return (
-    <div>
+    <nav aria-label="Nawigacja">
       <h3 className="text-sm font-semibold text-gray-100 uppercase tracking-wider mb-4">
         Nawigacja
       </h3>
@@ -54,13 +61,13 @@ function NavSection() {
           </li>
         ))}
       </ul>
-    </div>
+    </nav>
   )
 }
 
 function InfoSection() {
   return (
-    <div>
+    <nav aria-label="Informacje">
       <h3 className="text-sm font-semibold text-gray-100 uppercase tracking-wider mb-4">
         Informacje
       </h3>
@@ -76,31 +83,25 @@ function InfoSection() {
           </li>
         ))}
       </ul>
-    </div>
+    </nav>
   )
 }
 
 function SocialLinks() {
   return (
     <div className="flex items-center gap-4">
-      <Link
-        href="https://facebook.com/agroportal"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Facebook"
-        className="text-gray-400 hover:text-agro-600 transition-colors"
-      >
-        <Facebook className="h-5 w-5" aria-hidden="true" />
-      </Link>
-      <Link
-        href="https://twitter.com/agroportal"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Twitter"
-        className="text-gray-400 hover:text-agro-600 transition-colors"
-      >
-        <Twitter className="h-5 w-5" aria-hidden="true" />
-      </Link>
+      {SOCIAL_LINKS.map(({ label, href, Icon }) => (
+        <Link
+          key={label}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={label}
+          className="text-gray-400 hover:text-agro-600 transition-colors"
+        >
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </Link>
+      ))}
     </div>
   )
 }
