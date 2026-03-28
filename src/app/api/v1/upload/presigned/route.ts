@@ -9,7 +9,7 @@
  *   { files: Array<{ filename: string, contentType: string, size: number }> }
  *
  * Response (success):
- *   { success: true, data: { urls: Array<{ url: string, key: string }> } }
+ *   { success: true, data: { urls: Array<{ url: string, key: string, expiresIn: number }> } }
  *
  * Response (error):
  *   { success: false, error: string }
@@ -28,6 +28,7 @@ import type { AllowedContentType } from '@/lib/schemas/upload'
 interface PresignedUrlEntry {
   url: string
   key: string
+  expiresIn: number
 }
 
 // ---------------------------------------------------------------------------
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return createPresignedUploadUrl({
           key,
           contentType: file.contentType as AllowedContentType,
+          size: file.size,
         })
       })
     )

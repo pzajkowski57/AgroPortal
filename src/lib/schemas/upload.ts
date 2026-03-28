@@ -12,6 +12,11 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
 const MAX_FILES = 10
 
 export const uploadFileEntrySchema = z.object({
+  /**
+   * Client-provided original filename — used for client-side bookkeeping only.
+   * It does NOT influence the R2 object key; the key is derived from the
+   * authenticated user ID, a UUID, and the content type.
+   */
   filename: z.string().min(1, 'Filename must not be empty'),
   contentType: z.enum(ALLOWED_CONTENT_TYPES, {
     errorMap: () => ({

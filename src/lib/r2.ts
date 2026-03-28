@@ -25,25 +25,34 @@ function requireEnv(name: string): string {
 // Client factory — lazy-initialised so missing env vars only throw at call time
 // ---------------------------------------------------------------------------
 
-let _client: S3Client | null = null
+interface R2ClientState {
+  client: S3Client
+  bucketName: string
+}
 
-function getR2Client(): S3Client {
-  if (_client) return _client
+let _state: R2ClientState | null = null
+
+function getR2Client(): R2ClientState {
+  if (_state) return _state
 
   const accountId = requireEnv('R2_ACCOUNT_ID')
   const accessKeyId = requireEnv('R2_ACCESS_KEY_ID')
   const secretAccessKey = requireEnv('R2_SECRET_ACCESS_KEY')
+  const bucketName = requireEnv('R2_BUCKET_NAME')
 
-  _client = new S3Client({
-    region: 'auto',
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
-  })
+  _state = {
+    bucketName,
+    client: new S3Client({
+      region: 'auto',
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+    }),
+  }
 
-  return _client
+  return _state
 }
 
 // ---------------------------------------------------------------------------
@@ -67,6 +76,8 @@ export function extForContentType(contentType: AllowedContentType): string {
 export interface PresignedUploadParams {
   key: string
   contentType: AllowedContentType
+  /** File size in bytes — sent as ContentLength so R2 enforces the limit server-side */
+  size: number
   /** Expiry in seconds — defaults to 900 (15 min) */
   expiresIn?: number
 }
@@ -74,23 +85,24 @@ export interface PresignedUploadParams {
 export interface PresignedUploadResult {
   url: string
   key: string
+  expiresIn: number
 }
 
 export async function createPresignedUploadUrl(
   params: PresignedUploadParams
 ): Promise<PresignedUploadResult> {
-  const { key, contentType, expiresIn = 900 } = params
+  const { key, contentType, size, expiresIn = 900 } = params
 
-  const bucketName = requireEnv('R2_BUCKET_NAME')
-  const client = getR2Client()
+  const { client, bucketName } = getR2Client()
 
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: key,
     ContentType: contentType,
+    ContentLength: size,
   })
 
   const url = await getSignedUrl(client, command, { expiresIn })
 
-  return { url, key }
+  return { url, key, expiresIn }
 }
