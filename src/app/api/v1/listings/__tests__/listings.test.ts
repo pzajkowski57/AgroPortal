@@ -43,7 +43,7 @@ import { GET as listingGetById, PATCH as listingPATCH, DELETE as listingDELETE }
 // Helpers
 // ---------------------------------------------------------------------------
 
-const mockDb = db as {
+const mockDb = db as unknown as {
   listing: {
     findMany: ReturnType<typeof vi.fn>
     findUnique: ReturnType<typeof vi.fn>
@@ -396,7 +396,7 @@ describe('GET /api/v1/listings/[id]', () => {
     ])
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1')
-    const res = await listingGetById(req, { params: { id: 'cuid-1' } })
+    const res = await listingGetById(req, { params: Promise.resolve({ id: 'cuid-1' }) })
     const json = await res.json()
 
     expect(res.status).toBe(200)
@@ -409,7 +409,7 @@ describe('GET /api/v1/listings/[id]', () => {
     mockDb.listing.findUnique.mockResolvedValueOnce(null)
 
     const req = makeRequest('http://localhost/api/v1/listings/nonexistent')
-    const res = await listingGetById(req, { params: { id: 'nonexistent' } })
+    const res = await listingGetById(req, { params: Promise.resolve({ id: 'nonexistent' }) })
 
     expect(res.status).toBe(404)
     const json = await res.json()
@@ -421,7 +421,7 @@ describe('GET /api/v1/listings/[id]', () => {
     mockDb.listing.findMany.mockResolvedValueOnce([])
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1')
-    await listingGetById(req, { params: { id: 'cuid-1' } })
+    await listingGetById(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
     expect(findManyCall.take).toBe(4)
@@ -432,7 +432,7 @@ describe('GET /api/v1/listings/[id]', () => {
     mockDb.listing.findMany.mockResolvedValueOnce([])
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1')
-    await listingGetById(req, { params: { id: 'cuid-1' } })
+    await listingGetById(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
     expect(findManyCall.where.id.not).toBe('cuid-1')
@@ -442,7 +442,7 @@ describe('GET /api/v1/listings/[id]', () => {
     mockDb.listing.findUnique.mockRejectedValueOnce(new Error('DB error'))
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1')
-    const res = await listingGetById(req, { params: { id: 'cuid-1' } })
+    const res = await listingGetById(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(500)
     const json = await res.json()
@@ -469,7 +469,7 @@ describe('PATCH /api/v1/listings/[id]', () => {
       { title: 'Updated' },
       { method: 'PATCH' }
     )
-    const res = await listingPATCH(req, { params: { id: 'cuid-1' } })
+    const res = await listingPATCH(req, { params: Promise.resolve({ id: 'cuid-1' }) })
     const json = await res.json()
 
     expect(res.status).toBe(200)
@@ -486,7 +486,7 @@ describe('PATCH /api/v1/listings/[id]', () => {
       { title: 'Admin Updated' },
       { method: 'PATCH' }
     )
-    const res = await listingPATCH(req, { params: { id: 'cuid-1' } })
+    const res = await listingPATCH(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(200)
   })
@@ -500,7 +500,7 @@ describe('PATCH /api/v1/listings/[id]', () => {
       { title: 'Hacked' },
       { method: 'PATCH' }
     )
-    const res = await listingPATCH(req, { params: { id: 'cuid-1' } })
+    const res = await listingPATCH(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(403)
     const json = await res.json()
@@ -515,7 +515,7 @@ describe('PATCH /api/v1/listings/[id]', () => {
       { title: 'Updated' },
       { method: 'PATCH' }
     )
-    const res = await listingPATCH(req, { params: { id: 'cuid-1' } })
+    const res = await listingPATCH(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(401)
   })
@@ -529,7 +529,7 @@ describe('PATCH /api/v1/listings/[id]', () => {
       { title: 'Updated' },
       { method: 'PATCH' }
     )
-    const res = await listingPATCH(req, { params: { id: 'nonexistent' } })
+    const res = await listingPATCH(req, { params: Promise.resolve({ id: 'nonexistent' }) })
 
     expect(res.status).toBe(404)
   })
@@ -543,7 +543,7 @@ describe('PATCH /api/v1/listings/[id]', () => {
       { price: -999 },
       { method: 'PATCH' }
     )
-    const res = await listingPATCH(req, { params: { id: 'cuid-1' } })
+    const res = await listingPATCH(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(400)
   })
@@ -551,17 +551,17 @@ describe('PATCH /api/v1/listings/[id]', () => {
   it('does a partial update — only provided fields are changed', async () => {
     mockAuth.mockResolvedValueOnce({ user: { id: 'user-1', role: 'user' } })
     mockDb.listing.findUnique.mockResolvedValueOnce(baseListing)
-    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, city: 'Kraków' })
+    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, title: 'Nowy tytul' })
 
     const req = makeJsonRequest(
       'http://localhost/api/v1/listings/cuid-1',
-      { city: 'Kraków' },
+      { title: 'Nowy tytul' },
       { method: 'PATCH' }
     )
-    await listingPATCH(req, { params: { id: 'cuid-1' } })
+    await listingPATCH(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     const updateCall = mockDb.listing.update.mock.calls[0][0]
-    expect(updateCall.data).toEqual({ city: 'Kraków' })
+    expect(updateCall.data).toEqual({ title: 'Nowy tytul' })
   })
 
   it('handles DB error during update gracefully', async () => {
@@ -571,10 +571,10 @@ describe('PATCH /api/v1/listings/[id]', () => {
 
     const req = makeJsonRequest(
       'http://localhost/api/v1/listings/cuid-1',
-      { city: 'Kraków' },
+      { title: 'Nowy tytul' },
       { method: 'PATCH' }
     )
-    const res = await listingPATCH(req, { params: { id: 'cuid-1' } })
+    const res = await listingPATCH(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(500)
     const json = await res.json()
@@ -598,7 +598,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
     mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'inactive' })
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
-    const res = await listingDELETE(req, { params: { id: 'cuid-1' } })
+    const res = await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })
     const json = await res.json()
 
     expect(res.status).toBe(200)
@@ -614,7 +614,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
     mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'inactive' })
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
-    const res = await listingDELETE(req, { params: { id: 'cuid-1' } })
+    const res = await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(200)
   })
@@ -624,7 +624,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
     mockDb.listing.findUnique.mockResolvedValueOnce(baseListing) // owned by user-1
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
-    const res = await listingDELETE(req, { params: { id: 'cuid-1' } })
+    const res = await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(403)
   })
@@ -633,7 +633,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
     mockAuth.mockResolvedValueOnce(null)
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
-    const res = await listingDELETE(req, { params: { id: 'cuid-1' } })
+    const res = await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(401)
   })
@@ -643,7 +643,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
     mockDb.listing.findUnique.mockResolvedValueOnce(null)
 
     const req = makeRequest('http://localhost/api/v1/listings/nonexistent', { method: 'DELETE' })
-    const res = await listingDELETE(req, { params: { id: 'nonexistent' } })
+    const res = await listingDELETE(req, { params: Promise.resolve({ id: 'nonexistent' }) })
 
     expect(res.status).toBe(404)
   })
@@ -654,7 +654,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
     mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'inactive' })
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
-    await listingDELETE(req, { params: { id: 'cuid-1' } })
+    await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     // `db.listing.delete` must NEVER be called
     expect((mockDb.listing as unknown as Record<string, ReturnType<typeof vi.fn>>).delete).toBeUndefined()
@@ -667,7 +667,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
     mockDb.listing.update.mockRejectedValueOnce(new Error('DB error'))
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
-    const res = await listingDELETE(req, { params: { id: 'cuid-1' } })
+    const res = await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })
 
     expect(res.status).toBe(500)
     const json = await res.json()

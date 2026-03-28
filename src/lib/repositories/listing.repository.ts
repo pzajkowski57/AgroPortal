@@ -3,6 +3,8 @@
  * Business logic lives in the route handlers; this layer handles only DB access.
  */
 
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
+import { ListingStatus } from '@prisma/client'
 import { db } from '@/server/db'
 import type { CreateListingInput, PatchListingInput, ListingsQuery } from '@/lib/schemas/listing'
 import { slugify } from '@/lib/utils/slugify'
@@ -12,7 +14,7 @@ import { slugify } from '@/lib/utils/slugify'
 // ---------------------------------------------------------------------------
 
 export interface FindListingsResult {
-  listings: Awaited<ReturnType<typeof findListings>>['listings']
+  listings: Awaited<ReturnType<typeof db.listing.findMany>>
   nextCursor: string | null
   total: number
 }
@@ -104,9 +106,9 @@ export async function findListings(query: ListingsQuery): Promise<FindListingsRe
   return { listings: page, nextCursor, total }
 }
 
-export async function findListingById(id: string) {
+export async function findListingById(id: string, includeInactive = false) {
   return db.listing.findUnique({
-    where: { id },
+    where: { id, ...(includeInactive ? {} : { status: 'active' }) },
     include: {
       images: { orderBy: { order: 'asc' } },
       category: { select: { id: true, name: true, slug: true } },
@@ -137,24 +139,32 @@ export async function findRelatedListings(listing: { id: string; categoryId: str
 export async function createListing(userId: string, data: CreateListingInput) {
   const slug = await generateSlug(data.title)
 
-  return db.listing.create({
-    data: {
-      userId,
-      slug,
-      status: 'active',
-      title: data.title,
-      description: data.description,
-      price: data.price,
-      currency: data.currency,
-      condition: data.condition,
-      categoryId: data.categoryId,
-      voivodeship: data.voivodeship,
-      city: data.city,
-      ...(data.machineryModelId ? { machineryModelId: data.machineryModelId } : {}),
-      ...(data.metaTitle ? { metaTitle: data.metaTitle } : {}),
-      ...(data.metaDesc ? { metaDesc: data.metaDesc } : {}),
-    },
+  const buildData = (resolvedSlug: string) => ({
+    userId,
+    slug: resolvedSlug,
+    status: ListingStatus.active,
+    title: data.title,
+    description: data.description,
+    price: data.price,
+    currency: data.currency,
+    condition: data.condition,
+    categoryId: data.categoryId,
+    voivodeship: data.voivodeship,
+    city: data.city,
+    ...(data.machineryModelId ? { machineryModelId: data.machineryModelId } : {}),
+    ...(data.metaTitle ? { metaTitle: data.metaTitle } : {}),
+    ...(data.metaDesc ? { metaDesc: data.metaDesc } : {}),
   })
+
+  try {
+    return await db.listing.create({ data: buildData(slug) })
+  } catch (err) {
+    if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+      const fallbackSlug = slug + '-' + Date.now().toString(36)
+      return db.listing.create({ data: buildData(fallbackSlug) })
+    }
+    throw err
+  }
 }
 
 export async function updateListing(id: string, data: PatchListingInput) {
@@ -172,6 +182,6 @@ export async function updateListing(id: string, data: PatchListingInput) {
 export async function softDeleteListing(id: string) {
   return db.listing.update({
     where: { id },
-    data: { status: 'inactive' },
+    data: { status: 'sold' as const },
   })
 }

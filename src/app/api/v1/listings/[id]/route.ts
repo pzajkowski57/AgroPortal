@@ -1,7 +1,7 @@
 /**
- * GET    /api/v1/listings/[id] — get a single listing + related listings (public)
- * PATCH  /api/v1/listings/[id] — partial update (owner or admin)
- * DELETE /api/v1/listings/[id] — soft-delete (owner or admin)
+ * GET    /api/v1/listings/[id] - get a single listing + related listings (public)
+ * PATCH  /api/v1/listings/[id] - partial update (owner or admin)
+ * DELETE /api/v1/listings/[id] - soft-delete (owner or admin)
  */
 
 import { auth } from '@/auth'
@@ -18,7 +18,7 @@ import {
 // ---------------------------------------------------------------------------
 
 interface RouteContext {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 // ---------------------------------------------------------------------------
@@ -36,7 +36,8 @@ function isOwnerOrAdmin(userId: string, role: string, listingUserId: string | nu
 
 export async function GET(_request: Request, { params }: RouteContext) {
   try {
-    const listing = await findListingById(params.id)
+    const { id } = await params
+    const listing = await findListingById(id)
 
     if (!listing) {
       return Response.json(
@@ -68,6 +69,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
 
 export async function PATCH(request: Request, { params }: RouteContext) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user?.id) {
@@ -77,7 +79,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       )
     }
 
-    const listing = await findListingById(params.id)
+    const listing = await findListingById(id, true)
 
     if (!listing) {
       return Response.json(
@@ -103,7 +105,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       )
     }
 
-    const updated = await updateListing(params.id, parsed.data)
+    const updated = await updateListing(id, parsed.data)
 
     return Response.json({ success: true, data: updated })
   } catch {
@@ -118,8 +120,9 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 // DELETE /api/v1/listings/[id]
 // ---------------------------------------------------------------------------
 
-export async function DELETE(request: Request, { params }: RouteContext) {
+export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user?.id) {
@@ -129,7 +132,7 @@ export async function DELETE(request: Request, { params }: RouteContext) {
       )
     }
 
-    const listing = await findListingById(params.id)
+    const listing = await findListingById(id, true)
 
     if (!listing) {
       return Response.json(
@@ -145,7 +148,7 @@ export async function DELETE(request: Request, { params }: RouteContext) {
       )
     }
 
-    await softDeleteListing(params.id)
+    await softDeleteListing(id)
 
     return Response.json({ success: true, data: null })
   } catch {

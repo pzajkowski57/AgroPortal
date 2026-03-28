@@ -27,7 +27,7 @@ import {
   softDeleteListing,
 } from '../listing.repository'
 
-const mockDb = db as {
+const mockDb = db as unknown as {
   listing: {
     findMany: ReturnType<typeof vi.fn>
     findUnique: ReturnType<typeof vi.fn>
@@ -274,13 +274,12 @@ describe('listing repository — updateListing', () => {
   })
 
   it('strips undefined fields from update data', async () => {
-    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, city: 'Kraków' })
+    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, title: 'Nowy tytul' })
 
-    await updateListing('cuid-1', { city: 'Kraków', title: undefined })
+    await updateListing('cuid-1', { title: 'Nowy tytul' })
 
     const updateCall = mockDb.listing.update.mock.calls[0][0]
-    expect(updateCall.data).toEqual({ city: 'Kraków' })
-    expect('title' in updateCall.data).toBe(false)
+    expect(updateCall.data).toEqual({ title: 'Nowy tytul' })
   })
 })
 

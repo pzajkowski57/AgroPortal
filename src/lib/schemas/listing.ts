@@ -4,12 +4,18 @@
  */
 
 import { z } from 'zod'
+import { isValidVoivodeshipCode } from '@/lib/utils/voivodeships'
 
 // ---------------------------------------------------------------------------
 // Shared field definitions
 // ---------------------------------------------------------------------------
 
 const conditionValues = ['new', 'used', 'for_parts'] as const
+const currencyValues = ['PLN', 'EUR', 'USD'] as const
+
+const voivodeshipField = z
+  .string()
+  .refine((val) => isValidVoivodeshipCode(val), { message: 'Invalid voivodeship code' })
 
 // ---------------------------------------------------------------------------
 // Create schema
@@ -19,10 +25,10 @@ export const createListingSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().min(10).max(10000),
   price: z.number().nonnegative(),
-  currency: z.string().length(3).default('PLN'),
+  currency: z.enum(currencyValues).default('PLN'),
   condition: z.enum(conditionValues),
   categoryId: z.string().min(1),
-  voivodeship: z.string().min(1).max(10),
+  voivodeship: voivodeshipField,
   city: z.string().min(1).max(100),
   machineryModelId: z.string().optional(),
   metaTitle: z.string().max(160).optional(),
@@ -32,10 +38,24 @@ export const createListingSchema = z.object({
 export type CreateListingInput = z.infer<typeof createListingSchema>
 
 // ---------------------------------------------------------------------------
-// Patch schema (all fields optional)
+// Patch schema defined independently with only safe, user-editable fields
 // ---------------------------------------------------------------------------
 
-export const patchListingSchema = createListingSchema.partial()
+export const patchListingSchema = z
+  .object({
+    title: z.string().min(3).max(200).optional(),
+    description: z.string().min(10).max(10000).optional(),
+    price: z.number().nonnegative().optional(),
+    currency: z.enum(currencyValues).optional(),
+    condition: z.enum(conditionValues).optional(),
+    voivodeship: voivodeshipField.optional(),
+    categoryId: z.string().min(1).optional(),
+    imageKeys: z.array(z.string()).optional(),
+    contact: z.string().max(500).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided',
+  })
 
 export type PatchListingInput = z.infer<typeof patchListingSchema>
 
