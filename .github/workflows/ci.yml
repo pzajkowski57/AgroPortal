@@ -52,6 +52,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    needs: [lint, typecheck]
 
     services:
       postgres:
@@ -80,6 +81,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/agroportal_test
+      REDIS_URL: "redis://localhost:6379"
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
       AUTH_URL: http://localhost:3000
       AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
@@ -111,8 +113,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Push database schema
-        run: npx prisma db push --skip-generate
+      - name: Run database migrations
+        run: npx prisma migrate deploy
 
       - name: Run tests
         run: npm test
@@ -120,7 +122,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint, typecheck]
+    needs: [test]
 
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
