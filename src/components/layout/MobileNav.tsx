@@ -1,0 +1,87 @@
+'use client'
+
+import React from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import * as Dialog from '@radix-ui/react-dialog'
+import { X, Leaf } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { NAV_LINKS } from './nav-links'
+
+interface MobileNavProps {
+  readonly isOpen: boolean
+  readonly onClose: () => void
+}
+
+export function MobileNav({ isOpen, onClose }: MobileNavProps) {
+  const pathname = usePathname()
+
+  return (
+    <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
+        <Dialog.Content
+          id="mobile-nav"
+          className="fixed inset-y-0 left-0 z-50 w-72 bg-card shadow-xl flex flex-col"
+          aria-describedby={undefined}
+        >
+          <Dialog.Title className="sr-only">Menu nawigacji</Dialog.Title>
+
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+            <Link
+              href="/"
+              onClick={onClose}
+              className="flex items-center gap-2 font-bold text-lg text-agro-500"
+            >
+              <Leaf className="h-5 w-5" aria-hidden="true" />
+              AgroPortal
+            </Link>
+            <Dialog.Close asChild>
+              <button
+                aria-label="Zamknij menu"
+                className="rounded-md p-1 hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </Dialog.Close>
+          </div>
+
+          <nav
+            aria-label="Nawigacja mobilna"
+            className="flex flex-col px-4 py-4 gap-1 flex-1"
+          >
+            {NAV_LINKS.map(({ label, href }) => {
+              const isActive = pathname === href
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onClose}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'block rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+                    isActive
+                      ? 'font-semibold text-agro-600 bg-agro-50'
+                      : 'text-foreground',
+                  )}
+                >
+                  {label}
+                </Link>
+              )
+            })}
+          </nav>
+
+          <div className="px-4 py-4 border-t border-border">
+            <Link
+              href="/ogloszenia/dodaj"
+              onClick={onClose}
+              className="block w-full rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium text-center px-4 py-2 transition-colors"
+            >
+              Dodaj ogłoszenie
+            </Link>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}
