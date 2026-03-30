@@ -145,7 +145,7 @@ describe('RejestracjaPage', () => {
 
     it('does not show an error alert on initial render', () => {
       renderWithProviders(<RejestracjaPage />)
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      expect(screen.getByRole('alert')).toHaveTextContent('')
     })
   })
 })

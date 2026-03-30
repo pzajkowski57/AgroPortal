@@ -149,11 +149,14 @@ export default function RejestracjaPage() {
             </div>
 
             {/* Global error */}
-            {error && (
-              <p role="alert" className="text-sm text-destructive">
-                {error}
-              </p>
-            )}
+            <p
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
+              className="min-h-[1.25rem] text-sm text-destructive"
+            >
+              {error ?? ''}
+            </p>
 
             <Button type="submit" className="w-full" disabled={!termsAccepted || isPending}>
               {isPending ? 'Rejestracja…' : 'Zarejestruj się'}

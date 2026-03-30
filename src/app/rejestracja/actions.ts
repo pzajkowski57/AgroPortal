@@ -2,6 +2,7 @@
 
 import bcrypt from 'bcryptjs'
 import { AuthError } from 'next-auth'
+import { Prisma } from '@prisma/client'
 import { signIn } from '@/auth'
 import { db } from '@/server/db'
 import { registerSchema } from '@/lib/schemas/auth'
@@ -29,6 +30,7 @@ export async function registerAction(
     email: formData.get('email'),
     password: formData.get('password'),
     confirmPassword: formData.get('confirmPassword'),
+    terms: formData.get('terms'),
   }
 
   const parsed = registerSchema.safeParse(rawData)
@@ -47,14 +49,21 @@ export async function registerAction(
 
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
 
-  await db.user.create({
-    data: {
-      name,
-      email,
-      passwordHash,
-      role: 'user',
-    },
-  })
+  try {
+    await db.user.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        role: 'user',
+      },
+    })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      return { error: 'Konto z tym adresem e-mail już istnieje' }
+    }
+    throw err
+  }
 
   // Auto-login after registration
   try {

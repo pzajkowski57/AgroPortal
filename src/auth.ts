@@ -38,10 +38,14 @@ const credentialsSchema = z.object({
 // ---------------------------------------------------------------------------
 
 function buildGoogleProvider() {
-  // Google env validation is handled in auth.config.ts — no duplicate guard needed here
+  const clientId = process.env.AUTH_GOOGLE_ID
+  const clientSecret = process.env.AUTH_GOOGLE_SECRET
+  if (!clientId || !clientSecret) {
+    throw new Error('AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET are required')
+  }
   return Google({
-    clientId: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    clientId,
+    clientSecret,
   })
 }
 
@@ -66,7 +70,7 @@ function buildCredentialsProvider() {
       if (!user || !user.passwordHash) {
         await bcrypt.compare(
           password,
-          '$2b$10$dummy.hash.to.prevent.timing.attack.padding00'
+          '$2b$10$X7o4OLFzCNQLPlAqSYKE/e6LBjh.4W4mCpJ4tHCDMCIxLTj1qH6ji'
         )
         return null
       }

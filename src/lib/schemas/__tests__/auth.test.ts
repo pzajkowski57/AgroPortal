@@ -107,6 +107,7 @@ describe('registerSchema', () => {
     email: 'jan@example.com',
     password: 'Password1',
     confirmPassword: 'Password1',
+    terms: 'on' as const,
   }
 
   describe('valid input', () => {

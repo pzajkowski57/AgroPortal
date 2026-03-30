@@ -87,7 +87,7 @@ describe('LogowaniePage', () => {
 
     it('does not show an error alert on initial render', () => {
       renderWithProviders(<LogowaniePage />)
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      expect(screen.getByRole('alert')).toHaveTextContent('')
     })
   })
 
