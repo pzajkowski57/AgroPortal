@@ -1,12 +1,17 @@
+import { HeroSection } from '@/components/home/HeroSection'
+import { CategoriesSection } from '@/components/home/CategoriesSection'
+import { FeaturedListings } from '@/components/home/FeaturedListings'
+import { StatsSection } from '@/components/home/StatsSection'
+import { CTASection } from '@/components/home/CTASection'
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-16">
-        <h1 className="text-4xl font-bold text-agro-500">AgroPortal</h1>
-        <p className="mt-4 text-muted-foreground">
-          Portal rolniczy dla polskich rolników
-        </p>
-      </div>
+      <HeroSection />
+      <CategoriesSection />
+      <FeaturedListings />
+      <StatsSection />
+      <CTASection />
     </main>
   )
 }
