@@ -6,18 +6,7 @@ import { usePathname } from 'next/navigation'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X, Leaf } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface NavLink {
-  readonly label: string
-  readonly href: string
-}
-
-const NAV_LINKS: readonly NavLink[] = [
-  { label: 'Ogłoszenia', href: '/ogloszenia' },
-  { label: 'Baza Firm', href: '/baza-firm' },
-  { label: 'Giełda', href: '/gielda' },
-  { label: 'Aktualności', href: '/aktualnosci' },
-] as const
+import { NAV_LINKS } from './nav-links'
 
 interface MobileNavProps {
   readonly isOpen: boolean
@@ -32,6 +21,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
         <Dialog.Content
+          id="mobile-nav"
           className="fixed inset-y-0 left-0 z-50 w-72 bg-card shadow-xl flex flex-col"
           aria-describedby={undefined}
         >
@@ -67,6 +57,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                   key={href}
                   href={href}
                   onClick={onClose}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'block rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
                     isActive

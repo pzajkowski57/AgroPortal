@@ -8,30 +8,11 @@ import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { UserMenu } from './UserMenu'
 import { MobileNav } from './MobileNav'
-
-interface NavLink {
-  readonly label: string
-  readonly href: string
-}
-
-const NAV_LINKS: readonly NavLink[] = [
-  { label: 'Ogłoszenia', href: '/ogloszenia' },
-  { label: 'Baza Firm', href: '/baza-firm' },
-  { label: 'Giełda', href: '/gielda' },
-  { label: 'Aktualności', href: '/aktualnosci' },
-] as const
+import { NAV_LINKS } from './nav-links'
 
 export function Header() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  function openMobileNav() {
-    setMobileOpen(true)
-  }
-
-  function closeMobileNav() {
-    setMobileOpen(false)
-  }
 
   return (
     <>
@@ -64,6 +45,7 @@ export function Header() {
                 <Link
                   key={href}
                   href={href}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
                     isActive
@@ -84,7 +66,6 @@ export function Header() {
               aria-hidden="true"
             />
             <Input
-              role="searchbox"
               type="search"
               placeholder="Szukaj ogłoszeń, firm..."
               className="pl-9 rounded-lg"
@@ -111,7 +92,7 @@ export function Header() {
               aria-label="Otwórz menu"
               aria-expanded={mobileOpen}
               aria-controls="mobile-nav"
-              onClick={openMobileNav}
+              onClick={() => setMobileOpen(true)}
               className="lg:hidden rounded-md p-2 hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Menu className="h-5 w-5" aria-hidden="true" />

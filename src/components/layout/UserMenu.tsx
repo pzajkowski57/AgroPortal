@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -8,10 +8,9 @@ import { User, LogOut, ChevronDown } from 'lucide-react'
 
 export function UserMenu() {
   const { data: session, status } = useSession()
-  const [open, setOpen] = useState(false)
 
   if (status === 'loading') {
-    return null
+    return <div className="h-8 w-8 rounded-full bg-muted animate-pulse" aria-hidden="true" />
   }
 
   if (!session) {
@@ -26,11 +25,10 @@ export function UserMenu() {
   }
 
   return (
-    <DropdownMenu.Root open={open} onOpenChange={setOpen}>
+    <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
           aria-label="Menu użytkownika"
-          aria-expanded={open}
           className="flex items-center gap-2 rounded-full p-1 hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-agro-100 text-agro-700">
