@@ -1,4 +1,5 @@
 import React from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -29,8 +30,8 @@ const CONDITION_STYLES: Record<ListingCondition, string> = {
 
 function formatPrice(price: string, currency: string): string {
   const numeric = parseFloat(price)
-  if (isNaN(numeric) || numeric === 0) {
-    return `0 ${currency}`
+  if (isNaN(numeric) || numeric <= 0) {
+    return 'Cena do uzgodnienia'
   }
   return `${numeric.toLocaleString('pl-PL')} ${currency}`
 }
@@ -56,11 +57,15 @@ export function ListingCard({
       {/* Image area */}
       <div className="relative">
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={title}
-            className="aspect-[4/3] w-full rounded-t-xl object-cover"
-          />
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-xl">
+            <Image
+              src={imageUrl}
+              alt={title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
+          </div>
         ) : (
           <div className="aspect-[4/3] w-full rounded-t-xl bg-gradient-to-br from-agro-100 to-agro-200" />
         )}

@@ -1,4 +1,5 @@
 import React from 'react'
+import Link from 'next/link'
 import {
   Tractor,
   Wheat,
@@ -31,9 +32,9 @@ const CATEGORIES: Category[] = [
 
 export function CategoriesSection(): React.ReactElement {
   return (
-    <section className="py-16">
+    <section aria-labelledby="categories-heading" className="py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
+        <h2 id="categories-heading" className="text-2xl font-bold text-foreground sm:text-3xl">
           Przeglądaj kategorie
         </h2>
 
@@ -41,9 +42,10 @@ export function CategoriesSection(): React.ReactElement {
           {CATEGORIES.map((category) => {
             const { Icon } = category
             return (
-              <article
+              <Link
                 key={category.slug}
-                className="group flex cursor-pointer flex-col items-center rounded-xl border bg-card p-6 text-center transition-shadow hover:shadow-md"
+                href={`/ogloszenia?kategoria=${category.slug}`}
+                className="group flex flex-col items-center rounded-xl border bg-card p-6 text-center transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-agro-500"
               >
                 <Icon
                   className="h-8 w-8 text-agro-500"
@@ -53,7 +55,7 @@ export function CategoriesSection(): React.ReactElement {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {category.count} ogłoszeń
                 </p>
-              </article>
+              </Link>
             )
           })}
         </div>

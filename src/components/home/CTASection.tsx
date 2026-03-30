@@ -4,10 +4,10 @@ import { PlusCircle } from 'lucide-react'
 
 export function CTASection(): React.ReactElement {
   return (
-    <section className="bg-agro-500 py-16">
+    <section aria-labelledby="cta-heading" className="bg-agro-500 py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">
+          <h2 id="cta-heading" className="text-3xl font-bold text-white sm:text-4xl">
             Dodaj swoje ogłoszenie za darmo
           </h2>
           <p className="mt-4 text-lg text-white/80">

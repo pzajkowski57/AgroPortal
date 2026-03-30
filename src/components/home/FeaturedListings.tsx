@@ -42,10 +42,10 @@ const PLACEHOLDER_LISTINGS: ListingCardProps[] = [
 
 export function FeaturedListings(): React.ReactElement {
   return (
-    <section className="bg-muted/50 py-16">
+    <section aria-labelledby="featured-heading" className="bg-muted/50 py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
+          <h2 id="featured-heading" className="text-2xl font-bold text-foreground sm:text-3xl">
             Najnowsze ogłoszenia
           </h2>
           <Link

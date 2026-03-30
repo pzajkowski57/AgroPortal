@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
@@ -20,6 +21,18 @@ const CATEGORY_CHIPS: CategoryChip[] = [
 
 export function HeroSection(): React.ReactElement {
   const [query, setQuery] = useState('')
+  const router = useRouter()
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    if (query.trim()) {
+      router.push(`/ogloszenia?q=${encodeURIComponent(query.trim())}`)
+    }
+  }
+
+  function handleChipClick(slug: string) {
+    router.push(`/ogloszenia?kategoria=${encodeURIComponent(slug)}`)
+  }
 
   return (
     <section className="w-full bg-gradient-to-br from-agro-600 to-agro-800 py-20">
@@ -35,7 +48,7 @@ export function HeroSection(): React.ReactElement {
 
           {/* Search bar */}
           <div className="mx-auto mt-8 max-w-2xl">
-            <div className="flex items-center gap-2 rounded-xl bg-white p-2 shadow-lg">
+            <form onSubmit={handleSearch} className="flex items-center gap-2 rounded-xl bg-white p-2 shadow-lg">
               <label htmlFor="hero-search" className="sr-only">
                 Szukaj ogłoszeń
               </label>
@@ -48,13 +61,13 @@ export function HeroSection(): React.ReactElement {
                 className="border-0 bg-transparent shadow-none focus-visible:ring-0"
               />
               <button
-                type="button"
+                type="submit"
                 className="flex shrink-0 items-center gap-2 rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
               >
                 <Search className="h-4 w-4" aria-hidden="true" />
                 Szukaj
               </button>
-            </div>
+            </form>
           </div>
 
           {/* Category chips */}
@@ -63,6 +76,7 @@ export function HeroSection(): React.ReactElement {
               <button
                 key={chip.slug}
                 type="button"
+                onClick={() => handleChipClick(chip.slug)}
                 className="rounded-full bg-white/20 px-4 py-1 text-sm text-white transition-colors hover:bg-white/30"
               >
                 {chip.label}

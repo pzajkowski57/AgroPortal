@@ -26,7 +26,7 @@ const TRUST_BADGES: TrustBadge[] = [
 
 export function StatsSection(): React.ReactElement {
   return (
-    <section className="py-16">
+    <section aria-label="Statystyki platformy" className="py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
