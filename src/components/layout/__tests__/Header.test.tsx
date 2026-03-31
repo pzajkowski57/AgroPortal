@@ -204,10 +204,10 @@ describe('Header — user menu (unauthenticated)', () => {
     expect(screen.getByRole('link', { name: /zaloguj się/i })).toBeInTheDocument()
   })
 
-  it('"Zaloguj się" link points to /auth/signin', () => {
+  it('"Zaloguj się" link points to /logowanie', () => {
     renderWithProviders(<Header />)
     const loginLink = screen.getByRole('link', { name: /zaloguj się/i })
-    expect(loginLink).toHaveAttribute('href', '/auth/signin')
+    expect(loginLink).toHaveAttribute('href', '/logowanie')
   })
 })
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Shield, BadgeCheck, Lock } from 'lucide-react'
+import { Shield, BadgeCheck, Lock, type LucideIcon } from 'lucide-react'
 
 interface Stat {
   value: string
@@ -7,7 +7,7 @@ interface Stat {
 }
 
 interface TrustBadge {
-  Icon: React.ComponentType<{ className?: string; 'aria-hidden'?: string | boolean }>
+  Icon: LucideIcon
   text: string
 }
 

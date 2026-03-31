@@ -34,7 +34,7 @@ describe('CategoriesSection', () => {
     })
 
     it('renders exactly 8 category cards in the grid', () => {
-      const { container } = renderWithProviders(<CategoriesSection />)
+      renderWithProviders(<CategoriesSection />)
       // Each card has role="article" or is a list item — use data-testid approach
       // Verify by querying all elements that contain a known category name
       const categoryNames = [

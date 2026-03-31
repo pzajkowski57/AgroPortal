@@ -1,4 +1,39 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://agroportal:agroportal@postgres:5432/agroportal"
+      REDIS_URL: "redis://redis:6379"
+      AUTH_SECRET: "dev-secret-32-chars-minimum-here!!"
+      AUTH_URL: "http://localhost:3000"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      AUTH_GOOGLE_ID: "placeholder"
+      AUTH_GOOGLE_SECRET: "placeholder"
+      R2_ACCOUNT_ID: "placeholder"
+      R2_ACCESS_KEY_ID: "placeholder"
+      R2_SECRET_ACCESS_KEY: "placeholder"
+      R2_BUCKET_NAME: "agroportal"
+      R2_PUBLIC_URL: "http://localhost:3000"
+      UPSTASH_REDIS_REST_URL: "https://placeholder.upstash.io"
+      UPSTASH_REDIS_REST_TOKEN: "placeholder"
+      RESEND_API_KEY: "re_placeholder"
+      RESEND_FROM_EMAIL: "noreply@agroportal.pl"
+      PAYU_POS_ID: "placeholder"
+      PAYU_MD5_KEY: "placeholder"
+      PAYU_OAUTH_CLIENT_ID: "placeholder"
+      PAYU_OAUTH_CLIENT_SECRET: "placeholder"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles:
+      - full
+
   postgres:
     image: postgres:16-alpine
     ports:

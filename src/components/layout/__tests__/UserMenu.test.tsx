@@ -25,11 +25,11 @@ describe('UserMenu — unauthenticated state', () => {
     expect(screen.getByRole('link', { name: /zaloguj się/i })).toBeInTheDocument()
   })
 
-  it('"Zaloguj się" href points to /auth/signin', () => {
+  it('"Zaloguj się" href points to /logowanie', () => {
     renderWithProviders(<UserMenu />)
     expect(screen.getByRole('link', { name: /zaloguj się/i })).toHaveAttribute(
       'href',
-      '/auth/signin',
+      '/logowanie',
     )
   })
 

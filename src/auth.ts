@@ -4,7 +4,7 @@
  * Do NOT import this in middleware — use src/auth.config.ts instead.
  */
 
-import NextAuth from 'next-auth'
+import NextAuth, { type NextAuthConfig } from 'next-auth'
 import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
@@ -40,8 +40,8 @@ const credentialsSchema = z.object({
 function buildGoogleProvider() {
   const clientId = process.env.AUTH_GOOGLE_ID
   const clientSecret = process.env.AUTH_GOOGLE_SECRET
-  if (!clientId || !clientSecret) {
-    throw new Error('AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET are required')
+  if (!clientId || !clientSecret || clientId === 'placeholder' || clientSecret === 'placeholder') {
+    return null
   }
   return Google({
     clientId,
@@ -103,7 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
 
   // Override providers with full Node.js versions
-  providers: [buildGoogleProvider(), buildCredentialsProvider()],
+  providers: [buildGoogleProvider(), buildCredentialsProvider()].filter(Boolean) as NextAuthConfig['providers'],
 
   session: {
     strategy: 'jwt',

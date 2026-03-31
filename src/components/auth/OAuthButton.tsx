@@ -54,7 +54,6 @@ function GoogleIcon({ className }: { className?: string }) {
 // ---------------------------------------------------------------------------
 
 export function OAuthButton({
-  provider: _provider,
   label,
   onClick,
   isLoading = false,
