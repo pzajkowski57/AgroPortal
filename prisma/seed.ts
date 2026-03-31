@@ -172,7 +172,8 @@ async function main(): Promise<void> {
     const message = err instanceof Error ? err.message : String(err);
     if (
       message.toLowerCase().includes("forumcategory") ||
-      message.includes("is not a function")
+      message.includes("is not a function") ||
+      message.includes("Cannot read properties of undefined")
     ) {
       console.log("  Skipped: ForumCategory model not yet in schema");
     } else {

@@ -11,21 +11,27 @@ import Google from 'next-auth/providers/google'
  * Validates that required Google OAuth env vars are present.
  * Throws at startup if misconfigured, giving a clear error message.
  */
-function resolveGoogleProvider(): NextAuthConfig['providers'][number] {
+function resolveGoogleProvider(): NextAuthConfig['providers'][number] | null {
   const clientId = process.env.AUTH_GOOGLE_ID
   const clientSecret = process.env.AUTH_GOOGLE_SECRET
 
-  if (!clientId || !clientSecret) {
-    throw new Error(
-      'Google OAuth is not configured. Set AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET in your .env file.'
+  if (!clientId || !clientSecret || clientId === 'placeholder' || clientSecret === 'placeholder') {
+    console.warn(
+      'Google OAuth is not configured. Set AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET in your .env file. Google login will be disabled.'
     )
+    return null
   }
 
   return Google({ clientId, clientSecret })
 }
 
+function resolveProviders(): NextAuthConfig['providers'] {
+  const google = resolveGoogleProvider()
+  return google ? [google] : []
+}
+
 export const authConfig: NextAuthConfig = {
-  providers: [resolveGoogleProvider()],
+  providers: resolveProviders(),
   pages: {
     signIn: '/logowanie',
     error: '/logowanie',

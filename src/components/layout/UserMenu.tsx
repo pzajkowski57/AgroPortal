@@ -16,7 +16,7 @@ export function UserMenu() {
   if (!session) {
     return (
       <Link
-        href="/auth/signin"
+        href="/logowanie"
         className="text-sm font-medium text-foreground hover:text-agro-600 transition-colors px-3 py-2 rounded-md hover:bg-accent"
       >
         Zaloguj się

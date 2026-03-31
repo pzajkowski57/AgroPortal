@@ -143,7 +143,7 @@ describe('registerSchema', () => {
     })
 
     it('rejects a missing name', () => {
-      const { name: _name, ...withoutName } = validInput
+      const withoutName = { email: validInput.email, password: validInput.password, confirmPassword: validInput.confirmPassword, terms: validInput.terms }
       const result = registerSchema.safeParse(withoutName)
       expect(result.success).toBe(false)
     })
@@ -210,7 +210,7 @@ describe('registerSchema', () => {
     })
 
     it('rejects when confirmPassword is missing', () => {
-      const { confirmPassword: _cp, ...withoutConfirm } = validInput
+      const withoutConfirm = { name: validInput.name, email: validInput.email, password: validInput.password, terms: validInput.terms }
       const result = registerSchema.safeParse(withoutConfirm)
       expect(result.success).toBe(false)
     })
