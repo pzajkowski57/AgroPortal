@@ -222,6 +222,76 @@ describe('listing repository — findListings', () => {
     expect(findManyCall.where.price.gte).toBe(1000)
     expect(findManyCall.where.price.lte).toBeUndefined()
   })
+
+  it('applies condition as { in: [...] } when an array is provided', async () => {
+    mockDb.listing.findMany.mockResolvedValueOnce([])
+    mockDb.listing.count.mockResolvedValueOnce(0)
+
+    await findListings({ limit: 20, condition: ['new', 'used'] })
+
+    const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
+    expect(findManyCall.where.condition).toEqual({ in: ['new', 'used'] })
+  })
+
+  it('does not add condition filter when condition array is empty', async () => {
+    mockDb.listing.findMany.mockResolvedValueOnce([])
+    mockDb.listing.count.mockResolvedValueOnce(0)
+
+    await findListings({ limit: 20, condition: [] })
+
+    const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
+    expect(findManyCall.where.condition).toBeUndefined()
+  })
+
+  it('orders by price ascending when sort is price_asc', async () => {
+    mockDb.listing.findMany.mockResolvedValueOnce([])
+    mockDb.listing.count.mockResolvedValueOnce(0)
+
+    await findListings({ limit: 20, sort: 'price_asc' })
+
+    const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
+    expect(findManyCall.orderBy).toContainEqual({ price: 'asc' })
+  })
+
+  it('orders by price descending when sort is price_desc', async () => {
+    mockDb.listing.findMany.mockResolvedValueOnce([])
+    mockDb.listing.count.mockResolvedValueOnce(0)
+
+    await findListings({ limit: 20, sort: 'price_desc' })
+
+    const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
+    expect(findManyCall.orderBy).toContainEqual({ price: 'desc' })
+  })
+
+  it('orders by createdAt desc when sort is newest (default)', async () => {
+    mockDb.listing.findMany.mockResolvedValueOnce([])
+    mockDb.listing.count.mockResolvedValueOnce(0)
+
+    await findListings({ limit: 20 })
+
+    const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
+    expect(findManyCall.orderBy).toContainEqual({ createdAt: 'desc' })
+  })
+
+  it('orders by createdAt desc when sort is popular', async () => {
+    mockDb.listing.findMany.mockResolvedValueOnce([])
+    mockDb.listing.count.mockResolvedValueOnce(0)
+
+    await findListings({ limit: 20, sort: 'popular' })
+
+    const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
+    expect(findManyCall.orderBy).toContainEqual({ createdAt: 'desc' })
+  })
+
+  it('always includes isHighlighted: desc in orderBy for promoted listings', async () => {
+    mockDb.listing.findMany.mockResolvedValueOnce([])
+    mockDb.listing.count.mockResolvedValueOnce(0)
+
+    await findListings({ limit: 20, sort: 'price_asc' })
+
+    const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
+    expect(findManyCall.orderBy).toContainEqual({ isHighlighted: 'desc' })
+  })
 })
 
 describe('listing repository — findListingById', () => {
@@ -288,13 +358,13 @@ describe('listing repository — softDeleteListing', () => {
     vi.clearAllMocks()
   })
 
-  it('sets status to inactive', async () => {
-    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'inactive' })
+  it('sets status to sold', async () => {
+    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'sold' })
 
     await softDeleteListing('cuid-1')
 
     const updateCall = mockDb.listing.update.mock.calls[0][0]
-    expect(updateCall.data.status).toBe('inactive')
+    expect(updateCall.data.status).toBe('sold')
     expect(updateCall.where.id).toBe('cuid-1')
   })
 })

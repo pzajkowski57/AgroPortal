@@ -63,6 +63,9 @@ export type PatchListingInput = z.infer<typeof patchListingSchema>
 // Query params schema for GET /listings
 // ---------------------------------------------------------------------------
 
+const sortValues = ['newest', 'price_asc', 'price_desc', 'popular'] as const
+export type SortValue = (typeof sortValues)[number]
+
 export const listingsQuerySchema = z.object({
   category: z.string().optional(),
   voivodeship: z.string().optional(),
@@ -76,7 +79,16 @@ export const listingsQuerySchema = z.object({
     .optional()
     .transform((val) => (val !== undefined ? Number(val) : undefined))
     .pipe(z.number().nonnegative().optional()),
-  condition: z.enum(conditionValues).optional(),
+  condition: z
+    .preprocess(
+      (val) => {
+        if (Array.isArray(val)) return val
+        if (typeof val === 'string') return [val]
+        return val
+      },
+      z.array(z.enum(conditionValues)).optional(),
+    ),
+  sort: z.enum(sortValues).optional(),
   q: z.string().max(200).optional(),
   cursor: z.string().optional(),
   limit: z
