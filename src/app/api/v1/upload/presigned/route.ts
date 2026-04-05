@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { auth } from '@/auth'
 import { presignedUploadRequestSchema } from '@/lib/schemas/upload'
-import { createPresignedUploadUrl, extForContentType } from '@/lib/r2'
+import { createPresignedUploadUrl, extForContentType } from '@/lib/storage/r2'
 import type { AllowedContentType } from '@/lib/schemas/upload'
 
 // ---------------------------------------------------------------------------

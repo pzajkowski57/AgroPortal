@@ -15,16 +15,6 @@ export interface ListingsFilters {
   sort: SortValue
 }
 
-const DEFAULT_FILTERS: ListingsFilters = {
-  q: '',
-  category: '',
-  voivodeship: '',
-  priceMin: '',
-  priceMax: '',
-  condition: [],
-  sort: 'newest',
-}
-
 function parseFilters(searchParams: URLSearchParams): ListingsFilters {
   const conditions = searchParams.getAll('condition') as ListingCondition[]
   const sort = (searchParams.get('sort') ?? 'newest') as SortValue

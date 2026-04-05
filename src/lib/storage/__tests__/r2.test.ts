@@ -4,7 +4,7 @@
  * Tests the pure mapping function directly without any mocks.
  */
 import { describe, it, expect } from 'vitest'
-import { extForContentType } from '@/lib/r2'
+import { extForContentType } from '@/lib/storage/r2'
 
 describe('extForContentType', () => {
   it('returns jpg for image/jpeg', () => {

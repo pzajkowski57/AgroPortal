@@ -3,7 +3,7 @@
  *
  * Usage in a route handler:
  *
- *   import { corsHeaders, handleCorsPreflight } from '@/lib/cors'
+ *   import { corsHeaders, handleCorsPreflight } from '@/lib/infra/cors'
  *
  *   export async function OPTIONS(request: Request) {
  *     return handleCorsPreflight(request) ?? new Response(null, { status: 204 })

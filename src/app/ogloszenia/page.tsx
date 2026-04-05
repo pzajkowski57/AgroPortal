@@ -2,7 +2,7 @@ import React, { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { findListings } from '@/lib/repositories/listing.repository'
 import { listingsQuerySchema } from '@/lib/schemas/listing'
-import { ListingsPageClient } from '@/components/listings/ListingsPageClient'
+import { ListingsPageClient } from '@/components/listings'
 import ListingsLoading from './loading'
 
 export const metadata: Metadata = {

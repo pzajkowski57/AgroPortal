@@ -1,5 +1,5 @@
 import React from 'react'
-import { ListingCardSkeleton } from '@/components/listings/ListingCardSkeleton'
+import { ListingCardSkeleton } from '@/components/listings'
 
 const SKELETON_COUNT = 9
 

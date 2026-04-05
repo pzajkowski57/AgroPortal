@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "test:regression": "vitest run src/__tests__/regression.test.tsx",
     "worker:dev": "npx tsx src/workers/index.ts",
     "worker:start": "node dist/workers/index.js"
   },

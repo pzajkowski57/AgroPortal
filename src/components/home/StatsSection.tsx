@@ -7,7 +7,7 @@ interface Stat {
 }
 
 interface TrustBadge {
-  Icon: React.ComponentType<{ className?: string; 'aria-hidden'?: string | boolean }>
+  Icon: React.ComponentType<React.SVGAttributes<SVGSVGElement>>
   text: string
 }
 
