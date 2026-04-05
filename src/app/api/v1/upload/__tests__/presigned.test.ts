@@ -17,7 +17,7 @@ vi.mock('@/auth', () => ({
 }))
 
 // Mock the R2 helper entirely so env var guards and real S3 calls are bypassed.
-vi.mock('@/lib/r2', () => ({
+vi.mock('@/lib/storage/r2', () => ({
   createPresignedUploadUrl: vi.fn(),
   extForContentType: (ct: string) => {
     const map: Record<string, string> = {
@@ -39,7 +39,7 @@ vi.mock('uuid', () => ({
 // ---------------------------------------------------------------------------
 
 import { auth } from '@/auth'
-import { createPresignedUploadUrl } from '@/lib/r2'
+import { createPresignedUploadUrl } from '@/lib/storage/r2'
 import { POST } from '../presigned/route'
 
 const mockAuth = vi.mocked(auth)

@@ -29,7 +29,7 @@ import {
   authLimiter,
   uploadLimiter,
   getRateLimitIdentifier,
-} from './lib/rate-limit'
+} from './lib/infra/rate-limit'
 import type { Ratelimit } from '@upstash/ratelimit'
 
 const { auth } = NextAuth(authConfig)

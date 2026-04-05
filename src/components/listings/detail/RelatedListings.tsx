@@ -1,5 +1,5 @@
 import React from 'react'
-import { ListingCard } from './ListingCard'
+import { ListingCard } from '../cards/ListingCard'
 import type { ListingCondition } from '@/types'
 
 export interface RelatedListing {

@@ -4,11 +4,7 @@ import type { Metadata } from 'next'
 import { findListingById, findRelatedListings } from '@/lib/repositories/listing.repository'
 import { getVoivodeshipName } from '@/lib/utils/voivodeships'
 import { APP_NAME, APP_URL } from '@/lib/constants'
-import { Breadcrumbs } from '@/components/listings/Breadcrumbs'
-import { ImageGallery } from '@/components/listings/ImageGallery'
-import { ListingDetails } from '@/components/listings/ListingDetails'
-import { SellerCard } from '@/components/listings/SellerCard'
-import { RelatedListings } from '@/components/listings/RelatedListings'
+import { Breadcrumbs, ImageGallery, ListingDetails, SellerCard, RelatedListings } from '@/components/listings'
 import type { ListingCondition } from '@/types'
 
 // ---------------------------------------------------------------------------

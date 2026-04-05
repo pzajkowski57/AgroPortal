@@ -2,8 +2,8 @@
 
 import React from 'react'
 import { useListingsFilters } from '@/hooks/useListingsFilters'
-import { ListingsFilters } from './ListingsFilters'
-import { MobileFiltersSheet } from './MobileFiltersSheet'
+import { ListingsFilters } from '../filters/ListingsFilters'
+import { MobileFiltersSheet } from '../filters/MobileFiltersSheet'
 import { ListingsGrid } from './ListingsGrid'
 import type { FindListingsResult } from '@/lib/repositories/listing.repository'
 import type { SortValue } from '@/lib/schemas/listing'

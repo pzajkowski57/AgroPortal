@@ -1,9 +1,9 @@
 'use client'
 
 import React from 'react'
-import { ListingCard } from './ListingCard'
-import { ListingCardSkeleton } from './ListingCardSkeleton'
-import { SortSelect } from './SortSelect'
+import { ListingCard } from '../cards/ListingCard'
+import { ListingCardSkeleton } from '../cards/ListingCardSkeleton'
+import { SortSelect } from '../filters/SortSelect'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { Button } from '@/components/ui/button'
 import { useListings } from '@/hooks/useListings'
