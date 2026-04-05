@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { renderWithProviders, createMockSession } from '@/test/helpers'
 import { UserMenu } from '../UserMenu'
 
-const mockUseSession = vi.fn(() => ({ data: null, status: 'unauthenticated', update: vi.fn() }))
+const mockUseSession = vi.fn(() => ({ data: null as import('next-auth').Session | null, status: 'unauthenticated', update: vi.fn() }))
 
 vi.mock('next-auth/react', () => ({
   useSession: () => mockUseSession(),

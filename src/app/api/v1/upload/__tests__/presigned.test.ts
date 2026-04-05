@@ -74,6 +74,7 @@ describe('POST /api/v1/upload/presigned', () => {
     mockCreatePresignedUploadUrl.mockImplementation(async ({ key }) => ({
       url: 'https://r2.example.com/presigned-url',
       key,
+      expiresIn: 900,
     }))
   })
 
@@ -311,10 +312,12 @@ describe('POST /api/v1/upload/presigned', () => {
         .mockResolvedValueOnce({
           url: 'https://r2.example.com/url-1',
           key: 'uploads/user-abc/uuid-1.jpg',
+          expiresIn: 900,
         })
         .mockResolvedValueOnce({
           url: 'https://r2.example.com/url-2',
           key: 'uploads/user-abc/uuid-2.png',
+          expiresIn: 900,
         })
 
       const res = await POST(

@@ -47,7 +47,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   // Default: RESEND_API_KEY is set
   process.env.RESEND_API_KEY = 'test-key'
-  mockEmailsSend.mockResolvedValue({ data: { id: 'email-id' }, error: null })
+  mockEmailsSend.mockResolvedValue({ data: { id: 'email-id' }, error: null, headers: null } as never)
   mockUpdateMany.mockResolvedValue({ count: 0 })
 })
 
@@ -68,7 +68,7 @@ describe('processListingExpiry', () => {
       makeExpiredListing('2'),
       makeExpiredListing('3'),
     ]
-    mockFindMany.mockResolvedValue(listings)
+    mockFindMany.mockResolvedValue(listings as never)
     mockUpdateMany.mockResolvedValue({ count: 3 })
 
     const result = await processListingExpiry()
@@ -88,7 +88,7 @@ describe('processListingExpiry', () => {
       makeExpiredListing('2'),
       makeExpiredListing('3'),
     ]
-    mockFindMany.mockResolvedValue(listings)
+    mockFindMany.mockResolvedValue(listings as never)
     mockUpdateMany.mockResolvedValue({ count: 3 })
 
     await processListingExpiry()
@@ -101,7 +101,7 @@ describe('processListingExpiry', () => {
       makeExpiredListing('1', { user: null }),
       makeExpiredListing('2'),
     ]
-    mockFindMany.mockResolvedValue(listings)
+    mockFindMany.mockResolvedValue(listings as never)
     mockUpdateMany.mockResolvedValue({ count: 2 })
 
     const result = await processListingExpiry()
@@ -122,14 +122,14 @@ describe('processListingExpiry', () => {
       makeExpiredListing('2'),
       makeExpiredListing('3'),
     ]
-    mockFindMany.mockResolvedValue(listings)
+    mockFindMany.mockResolvedValue(listings as never)
     mockUpdateMany.mockResolvedValue({ count: 3 })
 
     // Second email fails
     mockEmailsSend
-      .mockResolvedValueOnce({ data: { id: 'ok' }, error: null })
+      .mockResolvedValueOnce({ data: { id: 'ok' }, error: null } as never)
       .mockRejectedValueOnce(new Error('SMTP error'))
-      .mockResolvedValueOnce({ data: { id: 'ok' }, error: null })
+      .mockResolvedValueOnce({ data: { id: 'ok' }, error: null } as never)
 
     const result = await processListingExpiry()
 
@@ -141,7 +141,7 @@ describe('processListingExpiry', () => {
 
   it('propagates error from updateMany for BullMQ retry', async () => {
     const listings = [makeExpiredListing('1')]
-    mockFindMany.mockResolvedValue(listings)
+    mockFindMany.mockResolvedValue(listings as never)
     mockUpdateMany.mockRejectedValue(new Error('DB connection lost'))
 
     await expect(processListingExpiry()).rejects.toThrow('DB connection lost')
@@ -151,7 +151,7 @@ describe('processListingExpiry', () => {
     delete process.env.RESEND_API_KEY
 
     const listings = [makeExpiredListing('1'), makeExpiredListing('2')]
-    mockFindMany.mockResolvedValue(listings)
+    mockFindMany.mockResolvedValue(listings as never)
     mockUpdateMany.mockResolvedValue({ count: 2 })
 
     const result = await processListingExpiry()

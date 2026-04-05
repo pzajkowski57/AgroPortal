@@ -711,7 +711,10 @@ describe('Listing Detail', () => {
 // ============================================================================
 
 describe('API Endpoints — unit level', () => {
-  const mockDb = vi.mocked(serverDb)
+  // Cast overloaded Prisma methods to plain vi.fn() so mockResolvedValue / .mock are accessible
+  const mockFindMany = serverDb.listing.findMany as unknown as ReturnType<typeof vi.fn>
+  const mockCount = serverDb.listing.count as unknown as ReturnType<typeof vi.fn>
+  const mockFindUnique = serverDb.listing.findUnique as unknown as ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -723,8 +726,8 @@ describe('API Endpoints — unit level', () => {
         createListing({ id: 'listing-1' }),
         createListing({ id: 'listing-2' }),
       ]
-      mockDb.listing.findMany.mockResolvedValue(mockListings as never)
-      mockDb.listing.count.mockResolvedValue(2)
+      mockFindMany.mockResolvedValue(mockListings as never)
+      mockCount.mockResolvedValue(2)
 
       const result = await listingRepo.findListings({ limit: 20 })
 
@@ -733,28 +736,28 @@ describe('API Endpoints — unit level', () => {
     })
 
     it('findListings filters by category slug', async () => {
-      mockDb.listing.findMany.mockResolvedValue([])
-      mockDb.listing.count.mockResolvedValue(0)
+      mockFindMany.mockResolvedValue([])
+      mockCount.mockResolvedValue(0)
 
       await listingRepo.findListings({ limit: 20, category: 'ciagniki' })
 
-      const callArgs = mockDb.listing.findMany.mock.calls[0][0] as { where?: Record<string, unknown> }
+      const callArgs = mockFindMany.mock.calls[0][0] as { where?: Record<string, unknown> }
       expect(callArgs?.where?.['category']).toEqual({ slug: 'ciagniki' })
     })
 
     it('findListings filters by voivodeship', async () => {
-      mockDb.listing.findMany.mockResolvedValue([])
-      mockDb.listing.count.mockResolvedValue(0)
+      mockFindMany.mockResolvedValue([])
+      mockCount.mockResolvedValue(0)
 
       await listingRepo.findListings({ limit: 20, voivodeship: '14' })
 
-      const callArgs = mockDb.listing.findMany.mock.calls[0][0] as { where?: Record<string, unknown> }
+      const callArgs = mockFindMany.mock.calls[0][0] as { where?: Record<string, unknown> }
       expect(callArgs?.where?.['voivodeship']).toBe('14')
     })
 
     it('findListings filters by price range', async () => {
-      mockDb.listing.findMany.mockResolvedValue([])
-      mockDb.listing.count.mockResolvedValue(0)
+      mockFindMany.mockResolvedValue([])
+      mockCount.mockResolvedValue(0)
 
       await listingRepo.findListings({
         limit: 20,
@@ -762,29 +765,29 @@ describe('API Endpoints — unit level', () => {
         priceMax: 50000,
       })
 
-      const callArgs = mockDb.listing.findMany.mock.calls[0][0] as { where?: Record<string, unknown> }
+      const callArgs = mockFindMany.mock.calls[0][0] as { where?: Record<string, unknown> }
       const priceWhere = callArgs?.where?.['price'] as Record<string, number>
       expect(priceWhere?.gte).toBe(10000)
       expect(priceWhere?.lte).toBe(50000)
     })
 
     it('findListings filters by multiple conditions', async () => {
-      mockDb.listing.findMany.mockResolvedValue([])
-      mockDb.listing.count.mockResolvedValue(0)
+      mockFindMany.mockResolvedValue([])
+      mockCount.mockResolvedValue(0)
 
       await listingRepo.findListings({ limit: 20, condition: ['new', 'used'] })
 
-      const callArgs = mockDb.listing.findMany.mock.calls[0][0] as { where?: Record<string, unknown> }
+      const callArgs = mockFindMany.mock.calls[0][0] as { where?: Record<string, unknown> }
       expect(callArgs?.where?.['condition']).toEqual({ in: ['new', 'used'] })
     })
 
     it('findListings applies sort: price_asc', async () => {
-      mockDb.listing.findMany.mockResolvedValue([])
-      mockDb.listing.count.mockResolvedValue(0)
+      mockFindMany.mockResolvedValue([])
+      mockCount.mockResolvedValue(0)
 
       await listingRepo.findListings({ limit: 20, sort: 'price_asc' })
 
-      const callArgs = mockDb.listing.findMany.mock.calls[0][0] as { orderBy?: unknown[] }
+      const callArgs = mockFindMany.mock.calls[0][0] as { orderBy?: unknown[] }
       const orderBy = callArgs?.orderBy as Array<Record<string, string>>
       const hasPriceAsc = orderBy?.some((o) => o['price'] === 'asc')
       expect(hasPriceAsc).toBe(true)
@@ -794,14 +797,14 @@ describe('API Endpoints — unit level', () => {
   describe('GET /api/v1/listings/[id]', () => {
     it('findListingById returns single listing', async () => {
       const mockListing = createListing({ id: 'listing-1' })
-      mockDb.listing.findUnique.mockResolvedValue(mockListing as never)
+      mockFindUnique.mockResolvedValue(mockListing as never)
 
       const result = await listingRepo.findListingById('listing-1')
       expect(result).toEqual(mockListing)
     })
 
     it('findListingById returns null for missing listing', async () => {
-      mockDb.listing.findUnique.mockResolvedValue(null)
+      mockFindUnique.mockResolvedValue(null)
 
       const result = await listingRepo.findListingById('nonexistent')
       expect(result).toBeNull()
@@ -811,7 +814,7 @@ describe('API Endpoints — unit level', () => {
   describe('POST /api/v1/listings — requires authentication', () => {
     it('returns 401 when no session', async () => {
       const { auth } = await import('@/auth')
-      vi.mocked(auth).mockResolvedValue(null)
+      vi.mocked(auth).mockResolvedValue(null as never)
 
       const { POST } = await import('@/app/api/v1/listings/route')
       const req = new Request('http://localhost/api/v1/listings', {
@@ -826,7 +829,7 @@ describe('API Endpoints — unit level', () => {
   describe('PATCH /api/v1/listings/[id] — requires ownership', () => {
     it('returns 401 when not authenticated', async () => {
       const { auth } = await import('@/auth')
-      vi.mocked(auth).mockResolvedValue(null)
+      vi.mocked(auth).mockResolvedValue(null as never)
 
       const { PATCH } = await import('@/app/api/v1/listings/[id]/route')
       const req = new Request('http://localhost/api/v1/listings/listing-1', {
@@ -841,7 +844,7 @@ describe('API Endpoints — unit level', () => {
       const { auth } = await import('@/auth')
       vi.mocked(auth).mockResolvedValue(createMockSession('user') as never)
 
-      mockDb.listing.findUnique.mockResolvedValue(
+      mockFindUnique.mockResolvedValue(
         createListing({ id: 'listing-1', userId: 'different-user-id' }) as never,
       )
 
@@ -858,14 +861,14 @@ describe('API Endpoints — unit level', () => {
   describe('findRelatedListings', () => {
     it('returns related listings excluding current listing id', async () => {
       const relatedListings = [createListing({ id: 'related-1' })]
-      mockDb.listing.findMany.mockResolvedValue(relatedListings as never)
+      mockFindMany.mockResolvedValue(relatedListings as never)
 
       const result = await listingRepo.findRelatedListings({
         id: 'listing-1',
         categoryId: 'category-1',
       })
 
-      const callArgs = mockDb.listing.findMany.mock.calls[0][0] as { where?: Record<string, unknown> }
+      const callArgs = mockFindMany.mock.calls[0][0] as { where?: Record<string, unknown> }
       const idWhere = callArgs?.where?.['id'] as Record<string, string>
       expect(idWhere?.not).toBe('listing-1')
       expect(result).toHaveLength(1)
@@ -993,6 +996,11 @@ describe('Shared Components', () => {
 // ============================================================================
 
 describe('Repository Layer', () => {
+  // Cast overloaded Prisma methods to plain mock functions
+  const repoFindMany = serverDb.listing.findMany as unknown as ReturnType<typeof vi.fn>
+  const repoCount = serverDb.listing.count as unknown as ReturnType<typeof vi.fn>
+  const repoFindUnique = serverDb.listing.findUnique as unknown as ReturnType<typeof vi.fn>
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -1002,8 +1010,8 @@ describe('Repository Layer', () => {
     const items = Array.from({ length: 21 }, (_, i) =>
       createListing({ id: `listing-${i + 1}` }),
     )
-    vi.mocked(serverDb).listing.findMany.mockResolvedValue(items as never)
-    vi.mocked(serverDb).listing.count.mockResolvedValue(50)
+    repoFindMany.mockResolvedValue(items as never)
+    repoCount.mockResolvedValue(50)
 
     const result = await listingRepo.findListings({ limit: 20 })
 
@@ -1016,8 +1024,8 @@ describe('Repository Layer', () => {
     const items = Array.from({ length: 5 }, (_, i) =>
       createListing({ id: `listing-${i + 1}` }),
     )
-    vi.mocked(serverDb).listing.findMany.mockResolvedValue(items as never)
-    vi.mocked(serverDb).listing.count.mockResolvedValue(5)
+    repoFindMany.mockResolvedValue(items as never)
+    repoCount.mockResolvedValue(5)
 
     const result = await listingRepo.findListings({ limit: 20 })
 
@@ -1026,14 +1034,14 @@ describe('Repository Layer', () => {
 
   it('findListingById returns listing when found', async () => {
     const mockListing = createListing({ id: 'listing-1' })
-    vi.mocked(serverDb).listing.findUnique.mockResolvedValue(mockListing as never)
+    repoFindUnique.mockResolvedValue(mockListing as never)
 
     const result = await listingRepo.findListingById('listing-1')
     expect(result).not.toBeNull()
   })
 
   it('findListingById returns null when not found', async () => {
-    vi.mocked(serverDb).listing.findUnique.mockResolvedValue(null)
+    repoFindUnique.mockResolvedValue(null)
 
     const result = await listingRepo.findListingById('nonexistent')
     expect(result).toBeNull()
@@ -1045,37 +1053,37 @@ describe('Repository Layer', () => {
       createListing({ id: 'r2' }),
       createListing({ id: 'r3' }),
     ]
-    vi.mocked(serverDb).listing.findMany.mockResolvedValue(related as never)
+    repoFindMany.mockResolvedValue(related as never)
 
     const result = await listingRepo.findRelatedListings({
       id: 'listing-1',
       categoryId: 'category-1',
     })
 
-    const callArgs = vi.mocked(serverDb).listing.findMany.mock.calls[0][0] as { take?: number }
+    const callArgs = repoFindMany.mock.calls[0][0] as { take?: number }
     expect(callArgs?.take).toBe(4)
     expect(result).toHaveLength(3)
   })
 
   it('findListings applies price_desc sort correctly', async () => {
-    vi.mocked(serverDb).listing.findMany.mockResolvedValue([])
-    vi.mocked(serverDb).listing.count.mockResolvedValue(0)
+    repoFindMany.mockResolvedValue([])
+    repoCount.mockResolvedValue(0)
 
     await listingRepo.findListings({ limit: 20, sort: 'price_desc' })
 
-    const callArgs = vi.mocked(serverDb).listing.findMany.mock.calls[0][0] as { orderBy?: unknown[] }
+    const callArgs = repoFindMany.mock.calls[0][0] as { orderBy?: unknown[] }
     const orderBy = callArgs?.orderBy as Array<Record<string, string>>
     const hasPriceDesc = orderBy?.some((o) => o['price'] === 'desc')
     expect(hasPriceDesc).toBe(true)
   })
 
   it('findListings filters by full-text search term (q)', async () => {
-    vi.mocked(serverDb).listing.findMany.mockResolvedValue([])
-    vi.mocked(serverDb).listing.count.mockResolvedValue(0)
+    repoFindMany.mockResolvedValue([])
+    repoCount.mockResolvedValue(0)
 
     await listingRepo.findListings({ limit: 20, q: 'traktor' })
 
-    const callArgs = vi.mocked(serverDb).listing.findMany.mock.calls[0][0] as { where?: Record<string, unknown> }
+    const callArgs = repoFindMany.mock.calls[0][0] as { where?: Record<string, unknown> }
     expect(callArgs?.where?.['OR']).toBeDefined()
   })
 })
@@ -1090,11 +1098,12 @@ describe('Background Jobs — Listing Expiry Processor', () => {
   let mockFindMany: ReturnType<typeof vi.fn>
   let mockUpdateMany: ReturnType<typeof vi.fn>
   const mockResend = vi.mocked(resend)
+  const mockResendSend = resend.emails.send as unknown as ReturnType<typeof vi.fn>
 
   beforeEach(async () => {
     vi.clearAllMocks()
     process.env.RESEND_API_KEY = 'test-key'
-    mockResend.emails.send.mockResolvedValue({ data: { id: 'email-id' }, error: null } as never)
+    mockResendSend.mockResolvedValue({ data: { id: 'email-id' }, error: null } as never)
 
     // Resolve the mocked @/lib/db module to get typed mock functions
     const libDbMod = await vi.importMock<{ db: { listing: { findMany: ReturnType<typeof vi.fn>; updateMany: ReturnType<typeof vi.fn> } } }>('@/lib/db')
@@ -1188,7 +1197,7 @@ describe('Background Jobs — Listing Expiry Processor', () => {
     ]
     mockFindMany.mockResolvedValue(listings as never)
     mockUpdateMany.mockResolvedValue({ count: 2 })
-    mockResend.emails.send
+    mockResendSend
       .mockResolvedValueOnce({ data: { id: 'ok' }, error: null } as never)
       .mockRejectedValueOnce(new Error('SMTP error'))
 

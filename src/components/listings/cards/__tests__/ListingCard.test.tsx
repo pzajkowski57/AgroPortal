@@ -69,7 +69,7 @@ describe('ListingCard', () => {
     })
 
     it('renders a MapPin icon area next to location', () => {
-      const { container } = renderWithProviders(<ListingCard {...defaultProps} />)
+      renderWithProviders(<ListingCard {...defaultProps} />)
       // location container should contain an svg (lucide icon)
       const locationArea = screen.getByText(/warszawa/i).closest('div')
       expect(locationArea?.querySelector('svg')).toBeInTheDocument()
