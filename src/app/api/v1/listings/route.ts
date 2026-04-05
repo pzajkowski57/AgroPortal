@@ -18,12 +18,15 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
 
+    const conditionValues = searchParams.getAll('condition')
+
     const rawQuery = {
       category: searchParams.get('category') ?? undefined,
       voivodeship: searchParams.get('voivodeship') ?? undefined,
       priceMin: searchParams.get('priceMin') ?? undefined,
       priceMax: searchParams.get('priceMax') ?? undefined,
-      condition: searchParams.get('condition') ?? undefined,
+      condition: conditionValues.length > 0 ? conditionValues : undefined,
+      sort: searchParams.get('sort') ?? undefined,
       q: searchParams.get('q') ?? undefined,
       cursor: searchParams.get('cursor') ?? undefined,
       limit: searchParams.get('limit') ?? undefined,

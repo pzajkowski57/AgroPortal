@@ -48,8 +48,15 @@ async function generateSlug(title: string): Promise<string> {
 // Read operations
 // ---------------------------------------------------------------------------
 
+const SORT_ORDER_MAP = {
+  newest: [{ isHighlighted: 'desc' as const }, { createdAt: 'desc' as const }],
+  price_asc: [{ isHighlighted: 'desc' as const }, { price: 'asc' as const }],
+  price_desc: [{ isHighlighted: 'desc' as const }, { price: 'desc' as const }],
+  popular: [{ isHighlighted: 'desc' as const }, { createdAt: 'desc' as const }],
+} as const
+
 export async function findListings(query: ListingsQuery): Promise<FindListingsResult> {
-  const { category, voivodeship, priceMin, priceMax, condition, q, cursor, limit } = query
+  const { category, voivodeship, priceMin, priceMax, condition, sort, q, cursor, limit } = query
 
   // Build the where clause
   const where: Record<string, unknown> = {
@@ -71,8 +78,8 @@ export async function findListings(query: ListingsQuery): Promise<FindListingsRe
     }
   }
 
-  if (condition) {
-    where['condition'] = condition
+  if (condition && condition.length > 0) {
+    where['condition'] = { in: condition }
   }
 
   if (q) {
@@ -82,6 +89,8 @@ export async function findListings(query: ListingsQuery): Promise<FindListingsRe
     ]
   }
 
+  const orderBy = sort ? SORT_ORDER_MAP[sort] : SORT_ORDER_MAP.newest
+
   const take = limit + 1 // fetch one extra to detect if there is a next page
 
   const [listings, total] = await Promise.all([
@@ -89,7 +98,7 @@ export async function findListings(query: ListingsQuery): Promise<FindListingsRe
       where,
       take,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      orderBy: [{ isHighlighted: 'desc' }, { createdAt: 'desc' }],
+      orderBy,
       include: {
         images: { orderBy: { order: 'asc' }, take: 1 },
         category: { select: { id: true, name: true, slug: true } },
