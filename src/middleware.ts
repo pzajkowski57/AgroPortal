@@ -29,7 +29,7 @@ import {
   authLimiter,
   uploadLimiter,
   getRateLimitIdentifier,
-} from './lib/rate-limit'
+} from './lib/infra/rate-limit'
 import type { Ratelimit } from '@upstash/ratelimit'
 
 const { auth } = NextAuth(authConfig)
@@ -45,15 +45,19 @@ export default auth(async function middleware(request) {
   const { pathname } = request.nextUrl
   const limiter = selectLimiter(pathname)
 
-  if (limiter !== null) {
-    const identifier = getRateLimitIdentifier(request)
-    const result = await limiter.limit(identifier)
+  if (limiter) {
+    try {
+      const identifier = getRateLimitIdentifier(request)
+      const result = await limiter.limit(identifier)
 
-    if (!result.success) {
-      return new Response('Too Many Requests', {
-        status: 429,
-        headers: { 'Retry-After': '60' },
-      })
+      if (!result.success) {
+        return new Response('Too Many Requests', {
+          status: 429,
+          headers: { 'Retry-After': '60' },
+        })
+      }
+    } catch {
+      // Rate limiting unavailable (e.g. Upstash not configured in dev) — allow request through
     }
   }
 })

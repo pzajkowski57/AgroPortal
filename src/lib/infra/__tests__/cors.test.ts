@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { corsHeaders, handleCorsPreflight } from '@/lib/cors'
+import { corsHeaders, handleCorsPreflight } from '@/lib/infra/cors'
 
 // In the test environment NEXT_PUBLIC_APP_URL is not set, so the module
 // falls back to 'http://localhost:3000' as the single allowed origin.

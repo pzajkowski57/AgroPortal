@@ -63,7 +63,7 @@ export function renderWithProviders(
   { session = null, ...renderOptions }: RenderWithProvidersOptions = {},
 ) {
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return React.createElement(SessionProvider, { session }, children)
+    return React.createElement(SessionProvider, { session, children })
   }
 
   return render(ui, { wrapper: Wrapper, ...renderOptions })

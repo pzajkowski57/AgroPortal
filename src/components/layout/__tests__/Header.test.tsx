@@ -13,7 +13,7 @@ import { Header } from '../Header'
 // ---------------------------------------------------------------------------
 
 const mockUsePathname = vi.fn(() => '/')
-const mockUseSession = vi.fn(() => ({ data: null, status: 'unauthenticated', update: vi.fn() }))
+const mockUseSession = vi.fn(() => ({ data: null as import('next-auth').Session | null, status: 'unauthenticated', update: vi.fn() }))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({

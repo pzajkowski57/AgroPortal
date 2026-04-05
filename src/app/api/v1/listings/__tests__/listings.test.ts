@@ -162,7 +162,7 @@ describe('GET /api/v1/listings', () => {
     await listingsGET(req)
 
     const findManyCall = mockDb.listing.findMany.mock.calls[0][0]
-    expect(findManyCall.where.condition).toBe('new')
+    expect(findManyCall.where.condition).toEqual({ in: ['new'] })
   })
 
   it('always filters status=active', async () => {
@@ -595,7 +595,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
   it('soft-deletes a listing by setting status to inactive', async () => {
     mockAuth.mockResolvedValueOnce({ user: { id: 'user-1', role: 'user' } })
     mockDb.listing.findUnique.mockResolvedValueOnce(baseListing)
-    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'inactive' })
+    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'sold' })
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
     const res = await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })
@@ -605,13 +605,13 @@ describe('DELETE /api/v1/listings/[id]', () => {
     expect(json.success).toBe(true)
 
     const updateCall = mockDb.listing.update.mock.calls[0][0]
-    expect(updateCall.data.status).toBe('inactive')
+    expect(updateCall.data.status).toBe('sold')
   })
 
   it('allows admin to delete any listing', async () => {
     mockAuth.mockResolvedValueOnce({ user: { id: 'admin-user', role: 'admin' } })
     mockDb.listing.findUnique.mockResolvedValueOnce(baseListing)
-    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'inactive' })
+    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'sold' })
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
     const res = await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })
@@ -651,7 +651,7 @@ describe('DELETE /api/v1/listings/[id]', () => {
   it('never physically deletes — uses update, not delete', async () => {
     mockAuth.mockResolvedValueOnce({ user: { id: 'user-1', role: 'user' } })
     mockDb.listing.findUnique.mockResolvedValueOnce(baseListing)
-    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'inactive' })
+    mockDb.listing.update.mockResolvedValueOnce({ ...baseListing, status: 'sold' })
 
     const req = makeRequest('http://localhost/api/v1/listings/cuid-1', { method: 'DELETE' })
     await listingDELETE(req, { params: Promise.resolve({ id: 'cuid-1' }) })

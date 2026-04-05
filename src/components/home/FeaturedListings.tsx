@@ -1,8 +1,8 @@
 import React from 'react'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { ListingCard } from '@/components/listings/ListingCard'
-import type { ListingCardProps } from '@/components/listings/ListingCard'
+import { ListingCard } from '@/components/listings'
+import type { ListingCardProps } from '@/components/listings'
 
 // Static placeholder listings for the homepage (replaced by real API data later)
 const PLACEHOLDER_LISTINGS: ListingCardProps[] = [

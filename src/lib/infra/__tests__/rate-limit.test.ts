@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getRateLimitIdentifier } from '@/lib/rate-limit'
+import { getRateLimitIdentifier } from '@/lib/infra/rate-limit'
 
 function makeRequest(headers: Record<string, string> = {}): Request {
   return new Request('http://localhost/', { headers })
@@ -76,17 +76,17 @@ describe('getRateLimitIdentifier', () => {
 
   describe('limiter exports (test environment — Upstash not configured)', () => {
     it('apiLimiter is null when Upstash env vars are absent', async () => {
-      const { apiLimiter } = await import('@/lib/rate-limit')
+      const { apiLimiter } = await import('@/lib/infra/rate-limit')
       expect(apiLimiter).toBeNull()
     })
 
     it('authLimiter is null when Upstash env vars are absent', async () => {
-      const { authLimiter } = await import('@/lib/rate-limit')
+      const { authLimiter } = await import('@/lib/infra/rate-limit')
       expect(authLimiter).toBeNull()
     })
 
     it('uploadLimiter is null when Upstash env vars are absent', async () => {
-      const { uploadLimiter } = await import('@/lib/rate-limit')
+      const { uploadLimiter } = await import('@/lib/infra/rate-limit')
       expect(uploadLimiter).toBeNull()
     })
   })
