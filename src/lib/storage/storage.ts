@@ -81,7 +81,7 @@ export async function generatePresignedUploadUrl(
 ): Promise<string> {
   if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
     throw new Error(
-      `Content type "${contentType}" is not allowed. Permitted types: ${[...ALLOWED_CONTENT_TYPES].join(', ')}.`,
+      `Content type "${contentType}" is not allowed. Permitted types: ${Array.from(ALLOWED_CONTENT_TYPES).join(', ')}.`,
     )
   }
 

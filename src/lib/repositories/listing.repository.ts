@@ -53,7 +53,7 @@ const SORT_ORDER_MAP = {
   price_asc: [{ isHighlighted: 'desc' as const }, { price: 'asc' as const }],
   price_desc: [{ isHighlighted: 'desc' as const }, { price: 'desc' as const }],
   popular: [{ isHighlighted: 'desc' as const }, { createdAt: 'desc' as const }],
-} as const
+}
 
 export async function findListings(query: ListingsQuery): Promise<FindListingsResult> {
   const { category, voivodeship, priceMin, priceMax, condition, sort, q, cursor, limit } = query

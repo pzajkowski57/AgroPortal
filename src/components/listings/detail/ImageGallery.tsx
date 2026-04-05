@@ -195,7 +195,6 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps): R
               )}
               onClick={() => setActiveIndex(idx)}
               aria-label={`Zdjęcie ${idx + 1}`}
-              aria-pressed={idx === activeIndex}
             >
               <Image
                 src={img.url}

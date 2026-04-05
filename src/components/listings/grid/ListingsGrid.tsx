@@ -95,7 +95,8 @@ export function ListingsGrid({
       {!isLoading && listings.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {listings.map((listing) => {
-            const image = listing.images?.[0]
+            const listingWithImages = listing as typeof listing & { images?: { url: string }[] }
+            const image = listingWithImages.images?.[0]
             return (
               <ListingCard
                 key={listing.id}
