@@ -194,6 +194,7 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps): R
                   : 'border-transparent opacity-70 hover:opacity-100',
               )}
               onClick={() => setActiveIndex(idx)}
+              aria-pressed={idx === activeIndex}
               aria-label={`Zdjęcie ${idx + 1}`}
             >
               <Image
